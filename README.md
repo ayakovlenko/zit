@@ -2,9 +2,30 @@
 
 _git identity manager_
 
-## Getting Started
+## Installation
 
-First, remove any existing global identity:
+On Mac/Linux with Homebrew:
+
+```
+brew tap ayakovlenko/zit
+brew install ayakovlenko/zit/zit
+```
+
+From sources:
+
+```
+git clone https://github.com/ayakovlenko/zit.git
+cd zit
+go install
+```
+
+From binaries:
+
+Download binaries from the [releases](https://github.com/ayakovlenko/zit/releases) page.
+
+## Setup
+
+**Remove any existing global identity**
 
 ```bash
 git config --unset-all --global user.name
@@ -13,17 +34,17 @@ git config --unset-all --system user.name
 git config --unset-all --system user.email
 ```
 
-Require config to exist in order to make commits
-
-Without the global user name and user email, git would use the system’s hostname
-and username to make commits. Tell git to throw an error instead, requiring you
-to specify an identity for every new project.
+**Require config to exist in order to make commits**
 
 ```bash
 git config --global user.useConfigOnly true
 ```
 
-Run `zit doctor` to make sure the system is set up correctly:
+Without the global user name and user email, git would use the system's hostname
+and username to make commits. Tell git to throw an error instead, requiring you
+to specify an identity for every new project.
+
+Run `zit doctor` to make sure the system is configured correctly:
 
 ```bash
 $ zit doctor
