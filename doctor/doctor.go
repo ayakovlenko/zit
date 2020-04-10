@@ -27,35 +27,40 @@ var DoctorCmd = &cobra.Command{
 			check(
 				"git config --unset-all --global user.name",
 				func() bool {
-					out, _ := git.GetConfig("--global", "user.name")
+					out, err := git.GetConfig("--global", "user.name")
+					cli.PrintlnExit(err)
 					return out == ""
 				},
 			),
 			check(
 				"git config --unset-all --global user.email",
 				func() bool {
-					out, _ := git.GetConfig("--global", "user.email")
+					out, err := git.GetConfig("--global", "user.email")
+					cli.PrintlnExit(err)
 					return out == ""
 				},
 			),
 			check(
 				"git config --unset-all --system user.name",
 				func() bool {
-					out, _ := git.GetConfig("--system", "user.name")
+					out, err := git.GetConfig("--system", "user.name")
+					cli.PrintlnExit(err)
 					return out == ""
 				},
 			),
 			check(
 				"git config --unset-all --system user.email",
 				func() bool {
-					out, _ := git.GetConfig("--system", "user.email")
+					out, err := git.GetConfig("--system", "user.email")
+					cli.PrintlnExit(err)
 					return out == ""
 				},
 			),
 		}
 
 		fmt.Println(strings.Join(out, "\n"))
-	}}
+	},
+}
 
 func check(name string, check func() bool) string {
 	var tick string

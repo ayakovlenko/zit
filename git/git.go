@@ -14,6 +14,10 @@ func gitCommand(args []string) (*string, error) {
 
 	out, err := theCmd.CombinedOutput()
 	if err != nil {
+		if _, ok := err.(*exec.ExitError); ok {
+			return nil, err
+		}
+
 		return nil, fmt.Errorf(
 			"failed to execute %+v:\n%s",
 			theCmd,
@@ -49,9 +53,17 @@ func SetConfig(scope, key, value string) error {
 // GetConfig TODO
 func GetConfig(scope, key string) (string, error) {
 	out, err := gitCommand([]string{"config", scope, key})
+
 	if err != nil {
+		if exitError, ok := err.(*exec.ExitError); ok {
+			if exitError.ExitCode() == 1 {
+				return "", nil
+			}
+		}
+
 		return "", err
 	}
+
 	return *out, nil
 }
 
