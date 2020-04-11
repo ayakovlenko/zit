@@ -74,7 +74,7 @@ type RepoInfo struct {
 	Name  string
 }
 
-var ownerRepoPattern = regexp.MustCompile(`\/?(.*)\/(.*)\.git$`)
+var ownerRepoPattern = regexp.MustCompile(`\/?(.*)\/([^.]*)(\.git)?$`)
 
 // ExtractRepoInfo TODO
 func ExtractRepoInfo(remote string) (*RepoInfo, error) {
