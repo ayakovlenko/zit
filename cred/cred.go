@@ -29,7 +29,7 @@ var SetCredCmd = &cobra.Command{
 		host, err := git.RemoteHost("origin")
 		cli.PrintlnExit(err)
 
-		repo, err := git.ExtractRepoInfo(*host)
+		repo, err := git.ExtractRepoInfo(host)
 		cli.PrintlnExit(err)
 
 		conf, err := hostMap.Get((*repo).Host)

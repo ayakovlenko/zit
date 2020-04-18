@@ -9,36 +9,40 @@ import (
 	giturls "github.com/whilp/git-urls"
 )
 
-func gitCommand(args []string) (*string, error) {
+func gitCommand(args []string) (string, error) {
 	theCmd := exec.Command("git", args...)
 
-	out, err := theCmd.CombinedOutput()
+	bout, err := theCmd.CombinedOutput()
+	sout := strings.TrimSpace(string(bout))
+
 	if err != nil {
 		if _, ok := err.(*exec.ExitError); ok {
-			return nil, err
+			return sout, err
 		}
 
-		return nil, fmt.Errorf(
+		return sout, fmt.Errorf(
 			"failed to execute %+v:\n%s",
 			theCmd,
-			string(out),
+			sout,
 		)
 	}
 
-	res := strings.TrimSpace(string(out))
-	return &res, nil
+	return sout, nil
 }
 
 // RemoteHost TODO
-func RemoteHost(name string) (*string, error) {
+func RemoteHost(name string) (string, error) {
 	out, err := gitCommand([]string{"remote", "get-url", name})
 	if err != nil {
-		return nil, err
+		if exitError, ok := err.(*exec.ExitError); ok {
+			if exitError.ExitCode() == 128 {
+				return "", fmt.Errorf("remote %q not set", name)
+			}
+		}
+		return out, err
 	}
 
-	remoteURL := strings.TrimSpace(string(*out))
-
-	return &remoteURL, nil
+	return out, nil
 }
 
 // SetConfig TODO
@@ -61,10 +65,10 @@ func GetConfig(scope, key string) (string, error) {
 			}
 		}
 
-		return "", err
+		return out, err
 	}
 
-	return *out, nil
+	return out, nil
 }
 
 // RepoInfo TODO
