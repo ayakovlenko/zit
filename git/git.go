@@ -9,7 +9,7 @@ import (
 	giturls "github.com/whilp/git-urls"
 )
 
-// ErrNoRemoteURL defines an error returned when the remote URL is not set
+// ErrNoRemoteURL defines an error returned when the remote URL is not set.
 type ErrNoRemoteURL struct {
 	name string
 }
@@ -89,8 +89,9 @@ type RepoInfo struct {
 
 var ownerRepoPattern = regexp.MustCompile(`\/?(.*)\/([^.]*)(\.git)?$`)
 
-// ExtractRepoInfo extracts repository info (such as repository owner/name, and
-// git host) from remote URL.
+// ExtractRepoInfo extracts repository information, such as the repository owner
+// (username or organization name), the repository name, and the git host of the
+// repository) from remote URL.
 func ExtractRepoInfo(remoteURL string) (*RepoInfo, error) {
 	u, err := giturls.Parse(remoteURL)
 	if err != nil {
