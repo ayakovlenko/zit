@@ -9,6 +9,15 @@ import (
 	giturls "github.com/whilp/git-urls"
 )
 
+// ErrNoRemoteURL defines an error returned when the remote URL is not set
+type ErrNoRemoteURL struct {
+	name string
+}
+
+func (e *ErrNoRemoteURL) Error() string {
+	return fmt.Sprintf("remote %q is not set", e.name)
+}
+
 func gitCommand(args []string) (string, error) {
 	theCmd := exec.Command("git", args...)
 
@@ -30,13 +39,13 @@ func gitCommand(args []string) (string, error) {
 	return sout, nil
 }
 
-// RemoteHost TODO
-func RemoteHost(name string) (string, error) {
+// RemoteURL gets git remote URL by remote name.
+func RemoteURL(name string) (string, error) {
 	out, err := gitCommand([]string{"remote", "get-url", name})
 	if err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
 			if exitError.ExitCode() == 128 {
-				return "", fmt.Errorf("remote %q not set", name)
+				return "", &ErrNoRemoteURL{name}
 			}
 		}
 		return out, err
@@ -80,9 +89,10 @@ type RepoInfo struct {
 
 var ownerRepoPattern = regexp.MustCompile(`\/?(.*)\/([^.]*)(\.git)?$`)
 
-// ExtractRepoInfo TODO
-func ExtractRepoInfo(remote string) (*RepoInfo, error) {
-	u, err := giturls.Parse(remote)
+// ExtractRepoInfo extracts repository info (such as repository owner/name, and
+// git host) from remote URL.
+func ExtractRepoInfo(remoteURL string) (*RepoInfo, error) {
+	u, err := giturls.Parse(remoteURL)
 	if err != nil {
 		return nil, err
 	}

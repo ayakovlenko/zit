@@ -3,7 +3,6 @@ package cred
 import (
 	"fmt"
 	"os"
-	"path"
 	"zit/cli"
 	"zit/config"
 	"zit/git"
@@ -17,7 +16,7 @@ var SetCredCmd = &cobra.Command{
 	Short: "git identity manager",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		confPath, err := locateConfFile()
+		confPath, err := config.LocateConfFile()
 		cli.PrintlnExit(err)
 
 		confFile, err := os.Open(confPath)
@@ -26,8 +25,21 @@ var SetCredCmd = &cobra.Command{
 		hostMap, err := config.ReadHostMap(confPath, confFile)
 		cli.PrintlnExit(err)
 
-		host, err := git.RemoteHost("origin")
-		cli.PrintlnExit(err)
+		host, err := git.RemoteURL("origin")
+		if err != nil {
+			if _, ok := err.(*git.ErrNoRemoteURL); ok {
+				fmt.Printf(`Error: %s
+
+Add remote URL so that zit could use it for choosing the correct git identity as
+defined in the configuration file:
+
+    git remote add origin <url>
+`, err)
+				os.Exit(1)
+			} else {
+				cli.PrintlnExit(err)
+			}
+		}
 
 		repo, err := git.ExtractRepoInfo(host)
 		cli.PrintlnExit(err)
@@ -89,26 +101,4 @@ func findBestMatch(conf config.Config, repo git.RepoInfo) (cred *credentials) {
 type credentials struct {
 	name  string
 	email string
-}
-
-func locateConfFile() (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-
-	fileExists := func(filename string) bool {
-		info, err := os.Stat(filename)
-		if os.IsNotExist(err) {
-			return false
-		}
-		return !info.IsDir()
-	}
-
-	confPath := path.Join(home, ".zit", "config.jsonnet")
-	if !fileExists(confPath) {
-		return "", fmt.Errorf("config file not found at %s", confPath)
-	}
-
-	return confPath, nil
 }

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
+	"path"
 
 	"github.com/google/go-jsonnet"
 )
@@ -59,4 +61,27 @@ func ReadHostMap(filename string, r io.Reader) (*HostMap, error) {
 	}
 
 	return &hostMap, nil
+}
+
+// LocateConfFile locates the path of the configuration file.
+func LocateConfFile() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+
+	fileExists := func(filename string) bool {
+		info, err := os.Stat(filename)
+		if os.IsNotExist(err) {
+			return false
+		}
+		return !info.IsDir()
+	}
+
+	confPath := path.Join(home, ".zit", "config.jsonnet")
+	if !fileExists(confPath) {
+		return "", fmt.Errorf("config file not found at %s", confPath)
+	}
+
+	return confPath, nil
 }
