@@ -9,36 +9,49 @@ import (
 	giturls "github.com/whilp/git-urls"
 )
 
-func gitCommand(args []string) (*string, error) {
+// ErrNoRemoteURL defines an error returned when the remote URL is not set.
+type ErrNoRemoteURL struct {
+	name string
+}
+
+func (e *ErrNoRemoteURL) Error() string {
+	return fmt.Sprintf("remote %q is not set", e.name)
+}
+
+func gitCommand(args []string) (string, error) {
 	theCmd := exec.Command("git", args...)
 
-	out, err := theCmd.CombinedOutput()
+	bout, err := theCmd.CombinedOutput()
+	sout := strings.TrimSpace(string(bout))
+
 	if err != nil {
 		if _, ok := err.(*exec.ExitError); ok {
-			return nil, err
+			return sout, err
 		}
 
-		return nil, fmt.Errorf(
+		return sout, fmt.Errorf(
 			"failed to execute %+v:\n%s",
 			theCmd,
-			string(out),
+			sout,
 		)
 	}
 
-	res := strings.TrimSpace(string(out))
-	return &res, nil
+	return sout, nil
 }
 
-// RemoteHost TODO
-func RemoteHost(name string) (*string, error) {
+// RemoteURL gets git remote URL by remote name.
+func RemoteURL(name string) (string, error) {
 	out, err := gitCommand([]string{"remote", "get-url", name})
 	if err != nil {
-		return nil, err
+		if exitError, ok := err.(*exec.ExitError); ok {
+			if exitError.ExitCode() == 128 {
+				return "", &ErrNoRemoteURL{name}
+			}
+		}
+		return out, err
 	}
 
-	remoteURL := strings.TrimSpace(string(*out))
-
-	return &remoteURL, nil
+	return out, nil
 }
 
 // SetConfig TODO
@@ -61,10 +74,10 @@ func GetConfig(scope, key string) (string, error) {
 			}
 		}
 
-		return "", err
+		return out, err
 	}
 
-	return *out, nil
+	return out, nil
 }
 
 // RepoInfo TODO
@@ -76,9 +89,11 @@ type RepoInfo struct {
 
 var ownerRepoPattern = regexp.MustCompile(`\/?(.*)\/([^.]*)(\.git)?$`)
 
-// ExtractRepoInfo TODO
-func ExtractRepoInfo(remote string) (*RepoInfo, error) {
-	u, err := giturls.Parse(remote)
+// ExtractRepoInfo extracts repository information, such as the repository owner
+// (username or organization name), the repository name, and the git host of the
+// repository) from remote URL.
+func ExtractRepoInfo(remoteURL string) (*RepoInfo, error) {
+	u, err := giturls.Parse(remoteURL)
 	if err != nil {
 		return nil, err
 	}
