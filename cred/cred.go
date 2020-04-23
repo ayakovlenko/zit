@@ -15,6 +15,7 @@ var SetCredCmd = &cobra.Command{
 	Use:   "zit",
 	Short: "git identity manager",
 	Run: func(cmd *cobra.Command, args []string) {
+		ensureGitDir()
 
 		confPath, err := config.LocateConfFile()
 		cli.PrintlnExit(err)
@@ -101,4 +102,25 @@ func findBestMatch(conf config.Config, repo git.RepoInfo) (cred *credentials) {
 type credentials struct {
 	name  string
 	email string
+}
+
+func ensureGitDir() {
+	dir, err := os.Getwd()
+	cli.PrintlnExit(err)
+
+	ok, err := git.IsGitDir(dir)
+	cli.PrintlnExit(err)
+
+	if !ok {
+		fmt.Printf(`Error: %q is not a git directory
+
+Make sure you are executing zit inside a git directory.
+
+If you are, perhaps you have forgotten to initialize a new repository? In this
+case, run:
+
+    git init
+`, dir)
+		os.Exit(1)
+	}
 }
