@@ -18,7 +18,7 @@ func (e *ErrNoRemoteURL) Error() string {
 	return fmt.Sprintf("remote %q is not set", e.name)
 }
 
-func gitCommand(args []string) (string, error) {
+func git(args ...string) (string, error) {
 	theCmd := exec.Command("git", args...)
 
 	bout, err := theCmd.CombinedOutput()
@@ -41,7 +41,7 @@ func gitCommand(args []string) (string, error) {
 
 // RemoteURL gets git remote URL by remote name.
 func RemoteURL(name string) (string, error) {
-	out, err := gitCommand([]string{"remote", "get-url", name})
+	out, err := git("remote", "get-url", name)
 	if err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
 			if exitError.ExitCode() == 128 {
@@ -56,7 +56,7 @@ func RemoteURL(name string) (string, error) {
 
 // SetConfig TODO
 func SetConfig(scope, key, value string) error {
-	_, err := gitCommand([]string{"config", scope, key, value})
+	_, err := git("config", scope, key, value)
 	if err != nil {
 		return err
 	}
@@ -65,7 +65,7 @@ func SetConfig(scope, key, value string) error {
 
 // GetConfig TODO
 func GetConfig(scope, key string) (string, error) {
-	out, err := gitCommand([]string{"config", scope, key})
+	out, err := git("config", scope, key)
 
 	if err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
@@ -107,4 +107,19 @@ func ExtractRepoInfo(remoteURL string) (*RepoInfo, error) {
 	}
 
 	return &res, nil
+}
+
+// IsGitDir checks if dir is a git directory
+func IsGitDir(dir string) (bool, error) {
+	if _, err := git("status"); err != nil {
+		if exitError, ok := err.(*exec.ExitError); ok {
+			if exitError.ExitCode() == 128 {
+				return false, nil
+			}
+		}
+
+		return false, err
+	}
+
+	return true, nil
 }
