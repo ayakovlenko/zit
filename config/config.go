@@ -9,6 +9,7 @@ import (
 	"path"
 
 	"github.com/google/go-jsonnet"
+	"github.com/spf13/cobra"
 )
 
 // HostMap TODO
@@ -43,14 +44,24 @@ type Override struct {
 	User  User    `json:"user"`
 }
 
-// ReadHostMap TODO
-func ReadHostMap(filename string, r io.Reader) (*HostMap, error) {
+func readConfJSON(filename string, r io.Reader) (string, error) {
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(r)
 	confStr := buf.String()
 
 	vm := jsonnet.MakeVM()
 	confJSON, err := vm.EvaluateSnippet(filename, confStr)
+	if err != nil {
+		return "", err
+	}
+
+	return confJSON, nil
+}
+
+// ReadHostMap TODO
+func ReadHostMap(filename string, r io.Reader) (*HostMap, error) {
+	confJSON, err := readConfJSON(filename, r)
+
 	if err != nil {
 		return nil, err
 	}
@@ -84,4 +95,16 @@ func LocateConfFile() (string, error) {
 	}
 
 	return confPath, nil
+}
+
+var ConfigCmd = &cobra.Command{
+	Use:   "config",
+	Short: "???", // TODO
+}
+
+func init() {
+	ConfigCmd.AddCommand(
+		ConfigPathCmd,
+		ConfigShowJsonCmd,
+	)
 }
