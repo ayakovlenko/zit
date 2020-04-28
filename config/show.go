@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var ConfigShowJsonCmd = &cobra.Command{
+var configShowJsonCmd = &cobra.Command{
 	Use:   "show-json",
 	Short: "???", // TODO
 	Run: func(cmd *cobra.Command, args []string) {

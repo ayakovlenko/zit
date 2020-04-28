@@ -3,6 +3,7 @@ package config
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -11,6 +12,8 @@ import (
 	"github.com/google/go-jsonnet"
 	"github.com/spf13/cobra"
 )
+
+var ErrConfFileExists = errors.New("conf file already exists")
 
 // HostMap TODO
 type HostMap map[string]Config
@@ -76,11 +79,6 @@ func ReadHostMap(filename string, r io.Reader) (*HostMap, error) {
 
 // LocateConfFile locates the path of the configuration file.
 func LocateConfFile() (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-
 	fileExists := func(filename string) bool {
 		info, err := os.Stat(filename)
 		if os.IsNotExist(err) {
@@ -89,12 +87,25 @@ func LocateConfFile() (string, error) {
 		return !info.IsDir()
 	}
 
-	confPath := path.Join(home, ".zit", "config.jsonnet")
+	confPath, err := defaultConfFileLocation()
+	if err != nil {
+		return "", err
+	}
+
 	if !fileExists(confPath) {
 		return "", fmt.Errorf("config file not found at %s", confPath)
 	}
 
 	return confPath, nil
+}
+
+func defaultConfFileLocation() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+
+	return path.Join(home, ".zit", "config.jsonnet"), nil
 }
 
 var ConfigCmd = &cobra.Command{
@@ -104,7 +115,8 @@ var ConfigCmd = &cobra.Command{
 
 func init() {
 	ConfigCmd.AddCommand(
-		ConfigPathCmd,
-		ConfigShowJsonCmd,
+		configPathCmd,
+		configShowJsonCmd,
+		configInitCmd,
 	)
 }

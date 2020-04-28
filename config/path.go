@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var ConfigPathCmd = &cobra.Command{
+var configPathCmd = &cobra.Command{
 	Use:   "path",
 	Short: "???", // TODO
 	Run: func(cmd *cobra.Command, args []string) {
