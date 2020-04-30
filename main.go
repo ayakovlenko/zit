@@ -2,17 +2,25 @@ package main
 
 import (
 	"zit/cli"
-	"zit/cred"
 	"zit/doctor"
+	"zit/identity"
 	"zit/version"
+
+	"github.com/spf13/cobra"
 )
 
 func main() {
-	cli.PrintlnExit(cred.SetCredCmd.Execute())
+	cli.PrintlnExit(rootCmd.Execute())
+}
+
+var rootCmd = &cobra.Command{
+	Use:   "zit",
+	Short: "git identity manager",
 }
 
 func init() {
-	cred.SetCredCmd.AddCommand(
+	rootCmd.AddCommand(
+		identity.SetCmd,
 		version.VersionCmd,
 		doctor.DoctorCmd,
 	)

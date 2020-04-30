@@ -1,14 +1,16 @@
 # zit
 
-[![](https://api.codacy.com/project/badge/Grade/13955840a985457f8f2e5f22beeea75c)](https://www.codacy.com/manual/ayakovlenko/zit)
-
 _git identity manager_
 
 ## How it works
 
-_zit_ chooses a git identity based on (1) git remote host, (2) repository owner
-name, (3) repository name as defined in a global configuration file
-`$HOME/.zit/config.jsonnet`:
+_zit_ chooses a git identity based on:
+
+1. git remote host
+2. repository owner
+3. repository name
+
+… as defined in the configuration file `$HOME/.zit/config.jsonnet`:
 
 ```jsonnet
 local User(name, email) = { name: name, email: email };
@@ -34,10 +36,10 @@ local user = {
 }
 ```
 
-To set up an identity, run `zit` inside the repo:
+To set up an identity, run `zit set` inside a repo directory:
 
 ```bash
-$ zit  # personal repo
+$ zit set  # personal repo
 set user: jdoe <jdoe@users.noreply.github.com>
 
 $ git remote get-url origin
@@ -45,23 +47,26 @@ https://github.com/jdoe/repo.git
 ```
 
 ```bash
-$ zit  # work repo
+$ zit set  # work repo
 set user: John Doe <john.doe@corp.com>
 
 $ git remote get-url origin
 git@github.corp.com:team/repo.git
 ```
 
+**Note**: Use `--dry-run` flag to test which identity will be used without applying
+it.
+
 ## Installation
 
-On Mac/Linux with Homebrew:
+**On Mac/Linux with Homebrew**
 
 ```bash
 brew tap ayakovlenko/zit
 brew install ayakovlenko/zit/zit
 ```
 
-From sources:
+**From sources**
 
 ```bash
 git clone https://github.com/ayakovlenko/zit.git
@@ -69,7 +74,7 @@ cd zit
 go install
 ```
 
-From binaries:
+**From binaries**
 
 Download binaries from the [releases](https://github.com/ayakovlenko/zit/releases) page.
 
