@@ -15,8 +15,8 @@ func findBestMatch(conf config.Config, repo git.RepoInfo) (cred *credentials) {
 
 	if conf.Overrides != nil {
 		for _, override := range conf.Overrides {
-			if override.Repo != nil {
-				if override.Owner == repo.Owner && *override.Repo == repo.Name {
+			if override.Repo != "" {
+				if override.Owner == repo.Owner && override.Repo == repo.Name {
 					cred = &credentials{
 						override.User.Name,
 						override.User.Email,
