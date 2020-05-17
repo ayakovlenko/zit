@@ -88,6 +88,7 @@ type RepoInfo struct {
 }
 
 var ownerRepoPattern = regexp.MustCompile(`\/?(.*)\/([^.]*)(\.git)?$`)
+var repoOnlyPattern = regexp.MustCompile(`\/?([^.]*)(\.git)?$`)
 
 // ExtractRepoInfo extracts repository information, such as the repository owner
 // (username or organization name), the repository name, and the git host of the
@@ -98,12 +99,28 @@ func ExtractRepoInfo(remoteURL string) (*RepoInfo, error) {
 		return nil, err
 	}
 
+	var owner string
+	var repo string
+
 	match := ownerRepoPattern.FindStringSubmatch(u.Path)
+	if match == nil {
+		match = repoOnlyPattern.FindStringSubmatch(u.Path)
+
+		if match != nil {
+			owner = ""
+			repo = match[1]
+		} else {
+			return nil, fmt.Errorf("remote url doesn't match any pattern: %s", remoteURL)
+		}
+	} else {
+		owner = match[1]
+		repo = match[2]
+	}
 
 	res := RepoInfo{
 		u.Hostname(),
-		match[1],
-		match[2],
+		owner,
+		repo,
 	}
 
 	return &res, nil
