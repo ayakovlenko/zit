@@ -38,9 +38,9 @@ type User struct {
 
 // Override TODO
 type Override struct {
-	Owner string  `json:"owner"`
-	Repo  *string `json:"repo,omitempty"`
-	User  User    `json:"user"`
+	Owner string `json:"owner"`
+	Repo  string `json:"repo,omitempty"`
+	User  User   `json:"user"`
 }
 
 // ReadHostMap TODO

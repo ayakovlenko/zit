@@ -5,9 +5,9 @@ import (
 	"zit/git"
 )
 
-func findBestMatch(conf config.Config, repo git.RepoInfo) (cred *credentials) {
+func findBestMatch(conf config.Config, repo git.RepoInfo) (user *config.User) {
 	if conf.Default != nil {
-		cred = &credentials{
+		user = &config.User{
 			conf.Default.Name,
 			conf.Default.Email,
 		}
@@ -15,9 +15,9 @@ func findBestMatch(conf config.Config, repo git.RepoInfo) (cred *credentials) {
 
 	if conf.Overrides != nil {
 		for _, override := range conf.Overrides {
-			if override.Repo != nil {
-				if override.Owner == repo.Owner && *override.Repo == repo.Name {
-					cred = &credentials{
+			if override.Repo != "" {
+				if override.Owner == repo.Owner && override.Repo == repo.Name {
+					user = &config.User{
 						override.User.Name,
 						override.User.Email,
 					}
@@ -28,7 +28,7 @@ func findBestMatch(conf config.Config, repo git.RepoInfo) (cred *credentials) {
 			}
 
 			if override.Owner == repo.Owner {
-				cred = &credentials{
+				user = &config.User{
 					override.User.Name,
 					override.User.Email,
 				}
@@ -38,9 +38,4 @@ func findBestMatch(conf config.Config, repo git.RepoInfo) (cred *credentials) {
 	}
 
 	return
-}
-
-type credentials struct {
-	name  string
-	email string
 }
