@@ -60,14 +60,14 @@ defined in the configuration file:
 
 		if !dryRun {
 			cli.PrintlnExit(
-				git.SetConfig("--local", "user.name", cred.name),
+				git.SetConfig("--local", "user.name", cred.Name),
 			)
 			cli.PrintlnExit(
-				git.SetConfig("--local", "user.email", cred.email),
+				git.SetConfig("--local", "user.email", cred.Email),
 			)
 		}
 
-		fmt.Printf("set user: %s <%s>\n", cred.name, cred.email)
+		fmt.Printf("set user: %s <%s>\n", cred.Name, cred.Email)
 	},
 }
 

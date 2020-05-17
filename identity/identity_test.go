@@ -9,20 +9,34 @@ import (
 
 func TestFindBestMatch(t *testing.T) {
 
+	defaultUser := config.User{
+		Name:  "john doe",
+		Email: "john.doe@gmail.com",
+	}
+
+	corpUser1 := config.User{
+		Name:  "john doe",
+		Email: "john.doe@corporate.com",
+	}
+
+	corpUser2 := config.User{
+		Name:  "john doe",
+		Email: "john.doe@corporate2.com",
+	}
+
+	corpUser3 := config.User{
+		Name:  "john doe",
+		Email: "john.doe@corporate3.com",
+	}
+
 	t.Run("match default user", func(t *testing.T) {
 		conf := config.Config{
-			Default: &config.User{
-				Name:  "john doe",
-				Email: "john.doe@gmail.com",
-			},
+			Default: &defaultUser,
 			Overrides: []config.Override{
 				{
 					Owner: "corporation",
 					Repo:  "",
-					User: config.User{
-						Name:  "john doe",
-						Email: "john.doe@corporate.com",
-					},
+					User:  corpUser1,
 				},
 			},
 		}
@@ -33,11 +47,7 @@ func TestFindBestMatch(t *testing.T) {
 			Name:  "repo",
 		}
 
-		want := &credentials{
-			name:  "john doe",
-			email: "john.doe@gmail.com",
-		}
-
+		want := &defaultUser
 		have := findBestMatch(conf, repoInfo)
 
 		if !reflect.DeepEqual(want, have) {
@@ -47,18 +57,12 @@ func TestFindBestMatch(t *testing.T) {
 
 	t.Run("match owner override", func(t *testing.T) {
 		conf := config.Config{
-			Default: &config.User{
-				Name:  "john doe",
-				Email: "john.doe@gmail.com",
-			},
+			Default: &defaultUser,
 			Overrides: []config.Override{
 				{
 					Owner: "corporation",
 					Repo:  "",
-					User: config.User{
-						Name:  "john doe",
-						Email: "john.doe@corporation.com",
-					},
+					User:  corpUser1,
 				},
 			},
 		}
@@ -69,11 +73,7 @@ func TestFindBestMatch(t *testing.T) {
 			Name:  "repo",
 		}
 
-		want := &credentials{
-			name:  "john doe",
-			email: "john.doe@corporation.com",
-		}
-
+		want := &corpUser1
 		have := findBestMatch(conf, repoInfo)
 
 		if !reflect.DeepEqual(want, have) {
@@ -83,18 +83,12 @@ func TestFindBestMatch(t *testing.T) {
 
 	t.Run("match repo override", func(t *testing.T) {
 		conf := config.Config{
-			Default: &config.User{
-				Name:  "john doe",
-				Email: "john.doe@gmail.com",
-			},
+			Default: &defaultUser,
 			Overrides: []config.Override{
 				{
 					Owner: "",
 					Repo:  "gist",
-					User: config.User{
-						Name:  "john doe",
-						Email: "john.doe@corporation.com",
-					},
+					User:  corpUser1,
 				},
 			},
 		}
@@ -105,11 +99,7 @@ func TestFindBestMatch(t *testing.T) {
 			Name:  "gist",
 		}
 
-		want := &credentials{
-			name:  "john doe",
-			email: "john.doe@corporation.com",
-		}
-
+		want := &corpUser1
 		have := findBestMatch(conf, repoInfo)
 
 		if !reflect.DeepEqual(want, have) {
@@ -119,34 +109,22 @@ func TestFindBestMatch(t *testing.T) {
 
 	t.Run("match repo and owner override", func(t *testing.T) {
 		conf := config.Config{
-			Default: &config.User{
-				Name:  "john doe",
-				Email: "john.doe@gmail.com",
-			},
+			Default: &defaultUser,
 			Overrides: []config.Override{
 				{
 					Owner: "1",
 					Repo:  "1",
-					User: config.User{
-						Name:  "john doe 1",
-						Email: "john.doe@corporation.com",
-					},
+					User:  corpUser1,
 				},
 				{
 					Owner: "2",
 					Repo:  "2",
-					User: config.User{
-						Name:  "john doe 2",
-						Email: "john.doe@corporation.com",
-					},
+					User:  corpUser2,
 				},
 				{
 					Owner: "3",
 					Repo:  "3",
-					User: config.User{
-						Name:  "john doe 3",
-						Email: "john.doe@corporation.com",
-					},
+					User:  corpUser3,
 				},
 			},
 		}
@@ -157,11 +135,7 @@ func TestFindBestMatch(t *testing.T) {
 			Name:  "2",
 		}
 
-		want := &credentials{
-			name:  "john doe 2",
-			email: "john.doe@corporation.com",
-		}
-
+		want := &corpUser2
 		have := findBestMatch(conf, repoInfo)
 
 		if !reflect.DeepEqual(want, have) {
