@@ -65,6 +65,14 @@ func ReadHostMap(filename string, r io.Reader) (*HostMap, error) {
 
 // LocateConfFile locates the path of the configuration file.
 func LocateConfFile() (string, error) {
+	var confPath string
+
+	// check ZIT_CONFIG env variable
+	confPath, defined := os.LookupEnv("ZIT_CONFIG")
+	if defined {
+		return confPath, nil
+	}
+
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
@@ -78,7 +86,7 @@ func LocateConfFile() (string, error) {
 		return !info.IsDir()
 	}
 
-	confPath := path.Join(home, ".zit", "config.jsonnet")
+	confPath = path.Join(home, ".zit", "config.jsonnet")
 	if !fileExists(confPath) {
 		return "", fmt.Errorf("config file not found at %s", confPath)
 	}
