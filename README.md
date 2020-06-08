@@ -10,7 +10,7 @@ _zit_ chooses a git identity based on:
 2. repository owner
 3. repository name
 
-… as defined in the configuration file `$HOME/.zit/config.jsonnet`:
+… as defined in the configuration file:
 
 ```jsonnet
 local User(name, email) = { name: name, email: email };
@@ -35,6 +35,22 @@ local user = {
   }
 }
 ```
+
+## Setup
+
+There are 2 ways to set up a configuration file:
+
+1. Place it at the default location: `$HOME/.zit/config.jsonnet`
+2. Specify an environment variable that points to the config file:
+
+```bash
+export ZIT_CONFIG=~/.zit-config.jsonnet
+```
+
+If the environment variable is set up, it will be chosen over the config at the
+default location.
+
+## Usage
 
 To set up an identity, run `zit set` inside a repo directory:
 
