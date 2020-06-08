@@ -11,6 +11,23 @@ import (
 	"github.com/google/go-jsonnet"
 )
 
+// EnvVarName TODO
+const EnvVarName = "ZIT_CONFIG"
+
+// ErrConfigNotFound TODO
+type ErrConfigNotFound struct {
+	EnvVar bool
+	Path   string
+}
+
+func (err *ErrConfigNotFound) Error() string {
+	envVar := ""
+	if err.EnvVar {
+		envVar = " defined in " + EnvVarName + " variable"
+	}
+	return fmt.Sprintf("config file%s is not found at %q", envVar, err.Path)
+}
+
 // HostMap TODO
 type HostMap map[string]Config
 
@@ -65,19 +82,6 @@ func ReadHostMap(filename string, r io.Reader) (*HostMap, error) {
 
 // LocateConfFile locates the path of the configuration file.
 func LocateConfFile() (string, error) {
-	var confPath string
-
-	// check ZIT_CONFIG env variable
-	confPath, defined := os.LookupEnv("ZIT_CONFIG")
-	if defined {
-		return confPath, nil
-	}
-
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-
 	fileExists := func(filename string) bool {
 		info, err := os.Stat(filename)
 		if os.IsNotExist(err) {
@@ -86,9 +90,26 @@ func LocateConfFile() (string, error) {
 		return !info.IsDir()
 	}
 
-	confPath = path.Join(home, ".zit", "config.jsonnet")
+	var confPath string
+
+	// check ZIT_CONFIG env variable
+	confPath, defined := os.LookupEnv(EnvVarName)
+
+	// if ZIT_CONFIG is not set, try default location
+	if !defined {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+
+		confPath = path.Join(home, ".zit", "config.jsonnet")
+	}
+
 	if !fileExists(confPath) {
-		return "", fmt.Errorf("config file not found at %s", confPath)
+		return "", &ErrConfigNotFound{
+			EnvVar: defined,
+			Path:   confPath,
+		}
 	}
 
 	return confPath, nil
