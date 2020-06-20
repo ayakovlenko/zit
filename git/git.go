@@ -87,8 +87,8 @@ type RepoInfo struct {
 	Name  string
 }
 
-var ownerRepoPattern = regexp.MustCompile(`\/?(.*)\/([^.]*)(\.git)?$`)
-var repoOnlyPattern = regexp.MustCompile(`\/?([^.]*)(\.git)?$`)
+var ownerRepoPattern = regexp.MustCompile(`\/?(.*?)\/(.*?)(\.git)?$`)
+var repoOnlyPattern = regexp.MustCompile(`\/?(.*?)(\.git)?$`)
 
 // ExtractRepoInfo extracts repository information, such as the repository owner
 // (username or organization name), the repository name, and the git host of the
