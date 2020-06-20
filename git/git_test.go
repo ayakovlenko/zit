@@ -51,6 +51,35 @@ func TestExtractHostNameFromRemote(t *testing.T) {
 		assertEquals(t, have, want)
 	})
 
+	t.Run("dots in the name", func(t *testing.T) {
+
+		t.Run("https string", func(t *testing.T) {
+			url := "https://github.com/hackerloft/hackerloft.github.io.git"
+
+			want := &RepoInfo{
+				"github.com",
+				"hackerloft",
+				"hackerloft.github.io",
+			}
+			have, _ := ExtractRepoInfo(url)
+
+			assertEquals(t, have, want)
+		})
+
+		t.Run("ssh string", func(t *testing.T) {
+			url := "git@github.com:hackerloft/hackerloft.github.io.git"
+
+			want := &RepoInfo{
+				"github.com",
+				"hackerloft",
+				"hackerloft.github.io",
+			}
+			have, _ := ExtractRepoInfo(url)
+
+			assertEquals(t, have, want)
+		})
+	})
+
 	t.Run("gist.github.com", func(t *testing.T) {
 
 		t.Run("https string", func(t *testing.T) {
