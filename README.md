@@ -78,8 +78,8 @@ it.
 **On Mac/Linux with Homebrew**
 
 ```bash
-brew tap ayakovlenko/zit
-brew install ayakovlenko/zit/zit
+brew tap ayakovlenko/tools
+brew install ayakovlenko/tools/zit
 ```
 
 **From sources**
