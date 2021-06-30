@@ -10,7 +10,11 @@ _zit_ chooses a git identity based on:
 2. repository owner
 3. repository name
 
-… as defined in the configuration file:
+… as defined in the configuration file.
+
+2 types of configuration files are supported:
+
+**Jsonnet**
 
 ```jsonnet
 local User(name, email) = { name: name, email: email };
@@ -36,6 +40,31 @@ local user = {
 }
 ```
 
+**YAML**
+
+```yaml
+users:
+  work: &work_user
+    name: John Doe
+    email: john.doe@corp.com
+  personal:
+    github_user: &personal_github_user
+      name: JD42
+      email: JD42@users.noreply.github.com
+    gitlab_user: &personal_gitlab_user
+      name: JD42
+      email: 786972-JD42@users.noreply.gitlab.com
+
+hosts:
+  github.com:
+    default: *personal_github_user
+    overrides:
+      - owner: corp
+        user: *work_user
+  gitlab.com:
+    default: *personal_gitlab_user
+```
+
 ## Setup
 
 There are 2 ways to set up a configuration file:
@@ -45,6 +74,8 @@ There are 2 ways to set up a configuration file:
 
 ```bash
 export ZIT_CONFIG=~/.zit-config.jsonnet
+# or
+export ZIT_CONFIG=~/.zit-config.yaml
 ```
 
 If the environment variable is set up, it will be chosen over the config at the

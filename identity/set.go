@@ -22,10 +22,7 @@ var SetCmd = &cobra.Command{
 		confPath, err := config.LocateConfFile()
 		cli.PrintlnExit(err)
 
-		confFile, err := os.Open(confPath)
-		cli.PrintlnExit(err)
-
-		hostMap, err := config.ReadHostMap(confPath, confFile)
+		conf, err := config.Load(confPath)
 		cli.PrintlnExit(err)
 
 		host, err := git.RemoteURL("origin")
@@ -47,10 +44,10 @@ defined in the configuration file:
 		repo, err := git.ExtractRepoInfo(host)
 		cli.PrintlnExit(err)
 
-		conf, err := hostMap.Get((*repo).Host)
+		hostConf, err := conf.Get((*repo).Host)
 		cli.PrintlnExit(err)
 
-		cred := findBestMatch(*conf, *repo)
+		cred := findBestMatch(*hostConf, *repo)
 		if cred == nil {
 			cli.PrintlnExit(fmt.Errorf("cannot find a match for host %q", (*repo).Host))
 		}
