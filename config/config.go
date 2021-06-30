@@ -31,16 +31,6 @@ func (err *ErrConfigNotFound) Error() string {
 // HostMap TODO
 type HostMap map[string]Config
 
-// Get TODO
-func (hm *HostMap) Get(host string) (*Config, error) {
-	conf, ok := (*hm)[host]
-	if !ok {
-		return nil, fmt.Errorf("cannot find config for host %q", host)
-	}
-
-	return &conf, nil
-}
-
 // Config TODO
 type Config struct {
 	Default   *User      `json:"default"`
@@ -49,19 +39,19 @@ type Config struct {
 
 // User TODO
 type User struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	Name  string `json:"name" yaml:"name"`
+	Email string `json:"email" yaml:"email"`
 }
 
 // Override TODO
 type Override struct {
-	Owner string `json:"owner"`
-	Repo  string `json:"repo,omitempty"`
-	User  User   `json:"user"`
+	Owner string `json:"owner" yaml:"owner"`
+	Repo  string `json:"repo,omitempty" yaml:"repo"`
+	User  User   `json:"user" yaml:"user"`
 }
 
 // ReadHostMap TODO
-func ReadHostMap(filename string, r io.Reader) (*HostMap, error) {
+func readHostMap(filename string, r io.Reader) (*HostMap, error) {
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(r)
 	confStr := buf.String()
@@ -113,4 +103,19 @@ func LocateConfFile() (string, error) {
 	}
 
 	return confPath, nil
+}
+
+// ---
+
+func toV2(hostMap *HostMap) *ConfigV2 {
+	configV2 := ConfigV2{
+		Hosts: map[string]HostV2{},
+	}
+	for host, hostConfig := range *hostMap {
+		configV2.Hosts[host] = HostV2{
+			Default:   hostConfig.Default,
+			Overrides: hostConfig.Overrides,
+		}
+	}
+	return &configV2
 }

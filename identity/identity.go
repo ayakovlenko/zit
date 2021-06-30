@@ -5,11 +5,11 @@ import (
 	"zit/git"
 )
 
-func findBestMatch(conf config.Config, repo git.RepoInfo) (user *config.User) {
+func findBestMatch(conf config.HostV2, repo git.RepoInfo) (user *config.User) {
 	if conf.Default != nil {
 		user = &config.User{
-			conf.Default.Name,
-			conf.Default.Email,
+			Name:  conf.Default.Name,
+			Email: conf.Default.Email,
 		}
 	}
 
@@ -18,8 +18,8 @@ func findBestMatch(conf config.Config, repo git.RepoInfo) (user *config.User) {
 			if override.Repo != "" {
 				if override.Owner == repo.Owner && override.Repo == repo.Name {
 					user = &config.User{
-						override.User.Name,
-						override.User.Email,
+						Name:  override.User.Name,
+						Email: override.User.Email,
 					}
 					break
 				} else {
@@ -29,8 +29,8 @@ func findBestMatch(conf config.Config, repo git.RepoInfo) (user *config.User) {
 
 			if override.Owner == repo.Owner {
 				user = &config.User{
-					override.User.Name,
-					override.User.Email,
+					Name:  override.User.Name,
+					Email: override.User.Email,
 				}
 				break
 			}
