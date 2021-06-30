@@ -14,7 +14,7 @@ _zit_ chooses a git identity based on:
 
 2 types of configuration files are supported:
 
-**Jsonnet**
+### Jsonnet
 
 ```jsonnet
 local User(name, email) = { name: name, email: email };
@@ -40,7 +40,7 @@ local user = {
 }
 ```
 
-**YAML**
+### YAML
 
 ```yaml
 users:
