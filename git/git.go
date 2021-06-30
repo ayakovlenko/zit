@@ -140,3 +140,11 @@ func IsGitDir(dir string) (bool, error) {
 
 	return true, nil
 }
+
+// Clone clones a repository
+func Clone(url string) error {
+	if _, err := git("clone", url); err != nil {
+		return err
+	}
+	return nil
+}

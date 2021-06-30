@@ -5,7 +5,8 @@ import (
 	"zit/git"
 )
 
-func findBestMatch(conf config.Config, repo git.RepoInfo) (user *config.User) {
+// FindBestMatch finds best credentials match given host, owner, and repo name
+func FindBestMatch(conf config.Config, repo git.RepoInfo) (user *config.User) {
 	if conf.Default != nil {
 		user = &config.User{
 			conf.Default.Name,

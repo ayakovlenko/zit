@@ -48,7 +48,7 @@ func TestFindBestMatch(t *testing.T) {
 		}
 
 		want := &defaultUser
-		have := findBestMatch(conf, repoInfo)
+		have := FindBestMatch(conf, repoInfo)
 
 		if !reflect.DeepEqual(want, have) {
 			t.Errorf("want: %s; have: %s", want, have)
@@ -74,7 +74,7 @@ func TestFindBestMatch(t *testing.T) {
 		}
 
 		want := &corpUser1
-		have := findBestMatch(conf, repoInfo)
+		have := FindBestMatch(conf, repoInfo)
 
 		if !reflect.DeepEqual(want, have) {
 			t.Errorf("want: %s; have: %s", want, have)
@@ -100,7 +100,7 @@ func TestFindBestMatch(t *testing.T) {
 		}
 
 		want := &corpUser1
-		have := findBestMatch(conf, repoInfo)
+		have := FindBestMatch(conf, repoInfo)
 
 		if !reflect.DeepEqual(want, have) {
 			t.Errorf("want: %s; have: %s", want, have)
@@ -136,7 +136,7 @@ func TestFindBestMatch(t *testing.T) {
 		}
 
 		want := &corpUser2
-		have := findBestMatch(conf, repoInfo)
+		have := FindBestMatch(conf, repoInfo)
 
 		if !reflect.DeepEqual(want, have) {
 			t.Errorf("want: %s; have: %s", want, have)

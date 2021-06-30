@@ -50,7 +50,7 @@ defined in the configuration file:
 		conf, err := hostMap.Get((*repo).Host)
 		cli.PrintlnExit(err)
 
-		cred := findBestMatch(*conf, *repo)
+		cred := FindBestMatch(*conf, *repo)
 		if cred == nil {
 			cli.PrintlnExit(fmt.Errorf("cannot find a match for host %q", (*repo).Host))
 		}

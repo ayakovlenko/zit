@@ -2,6 +2,7 @@ package main
 
 import (
 	"zit/cli"
+	"zit/clone"
 	"zit/doctor"
 	"zit/identity"
 	"zit/version"
@@ -23,5 +24,6 @@ func init() {
 		identity.SetCmd,
 		version.VersionCmd,
 		doctor.DoctorCmd,
+		clone.CloneCmd,
 	)
 }
