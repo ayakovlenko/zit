@@ -1,4 +1,4 @@
 #!/usr/bin/env sh
 set -eax
 
-go run cmd/zit/main.go $@
+go test ./...

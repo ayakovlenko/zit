@@ -3,9 +3,9 @@ package identity
 import (
 	"fmt"
 	"os"
-	"zit/cli"
-	"zit/config"
-	"zit/git"
+	"zit/internal/cli"
+	"zit/internal/config"
+	"zit/internal/git"
 
 	"github.com/spf13/cobra"
 )

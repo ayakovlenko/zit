@@ -101,8 +101,8 @@ $ git remote get-url origin
 git@github.corp.com:team/repo.git
 ```
 
-**Note**: Use `--dry-run` flag to test which identity will be used without applying
-it.
+**Note**: Use `--dry-run` flag to test which identity will be used without
+applying it.
 
 ## Installation
 
@@ -123,7 +123,8 @@ go install
 
 **From binaries**
 
-Download binaries from the [releases](https://github.com/ayakovlenko/zit/releases) page.
+Download binaries from the
+[releases](https://github.com/ayakovlenko/zit/releases) page.
 
 ## Setup
 
@@ -155,4 +156,21 @@ $ zit doctor
 - [x] git config --unset-all --global user.email
 - [x] git config --unset-all --system user.name
 - [x] git config --unset-all --system user.email
+```
+
+## Development
+
+Run all tests:
+
+```
+./scripts/test.sh
+```
+
+Release:
+
+- [ ] Bump version
+- [ ] Commit changes
+
+```
+./scripts/release.sh
 ```

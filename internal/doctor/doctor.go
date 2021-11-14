@@ -3,8 +3,8 @@ package doctor
 import (
 	"fmt"
 	"strings"
-	"zit/cli"
-	"zit/git"
+	"zit/internal/cli"
+	"zit/internal/git"
 
 	"github.com/spf13/cobra"
 )

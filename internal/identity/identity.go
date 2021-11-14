@@ -1,8 +1,8 @@
 package identity
 
 import (
-	"zit/config"
-	"zit/git"
+	"zit/internal/config"
+	"zit/internal/git"
 )
 
 func findBestMatch(conf config.HostV2, repo git.RepoInfo) (user *config.User) {

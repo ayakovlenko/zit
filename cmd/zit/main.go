@@ -1,10 +1,10 @@
 package main
 
 import (
-	"zit/cli"
-	"zit/doctor"
-	"zit/identity"
-	"zit/version"
+	"zit/internal/cli"
+	"zit/internal/doctor"
+	"zit/internal/identity"
+	"zit/internal/version"
 
 	"github.com/spf13/cobra"
 )

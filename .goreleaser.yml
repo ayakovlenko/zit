@@ -5,7 +5,8 @@ before:
   hooks:
     - go mod download
 builds:
-  - goos:
+  - main: ./cmd/zit
+    goos:
       - darwin
       - linux
     goarch:
