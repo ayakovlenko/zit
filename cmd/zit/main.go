@@ -2,7 +2,6 @@ package main
 
 import (
 	"zit/internal/cli"
-	"zit/internal/doctor"
 	"zit/internal/identity"
 	"zit/internal/version"
 
@@ -22,6 +21,6 @@ func init() {
 	rootCmd.AddCommand(
 		identity.SetCmd,
 		version.VersionCmd,
-		doctor.DoctorCmd,
+		doctorCmd,
 	)
 }
