@@ -9,7 +9,7 @@ import (
 var doctorCmd = &cobra.Command{
 	Use:   "doctor",
 	Short: "Check git setup for potential problems",
-	Run: func(cmd *cobra.Command, args []string) {
-		doctor.RunChecks()
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return doctor.RunChecks()
 	},
 }
