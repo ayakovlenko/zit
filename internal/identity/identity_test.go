@@ -1,10 +1,11 @@
 package identity
 
 import (
-	"reflect"
 	"testing"
 	"zit/internal/config"
 	"zit/internal/git"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestFindBestMatch(t *testing.T) {
@@ -50,9 +51,7 @@ func TestFindBestMatch(t *testing.T) {
 		want := &defaultUser
 		have := findBestMatch(conf, repoInfo)
 
-		if !reflect.DeepEqual(want, have) {
-			t.Errorf("want: %s; have: %s", want, have)
-		}
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("match owner override", func(t *testing.T) {
@@ -76,9 +75,7 @@ func TestFindBestMatch(t *testing.T) {
 		want := &corpUser1
 		have := findBestMatch(conf, repoInfo)
 
-		if !reflect.DeepEqual(want, have) {
-			t.Errorf("want: %s; have: %s", want, have)
-		}
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("match repo override", func(t *testing.T) {
@@ -102,9 +99,7 @@ func TestFindBestMatch(t *testing.T) {
 		want := &corpUser1
 		have := findBestMatch(conf, repoInfo)
 
-		if !reflect.DeepEqual(want, have) {
-			t.Errorf("want: %s; have: %s", want, have)
-		}
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("match repo and owner override", func(t *testing.T) {
@@ -138,8 +133,6 @@ func TestFindBestMatch(t *testing.T) {
 		want := &corpUser2
 		have := findBestMatch(conf, repoInfo)
 
-		if !reflect.DeepEqual(want, have) {
-			t.Errorf("want: %s; have: %s", want, have)
-		}
+		assert.Equal(t, want, have)
 	})
 }
