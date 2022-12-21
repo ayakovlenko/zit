@@ -15,6 +15,11 @@ func TestFindBestMatch(t *testing.T) {
 		Email: "john.doe@gmail.com",
 	}
 
+	otherUser := config.User{
+		Name:  "ion popescu",
+		Email: "ion.popescu@gmail.com",
+	}
+
 	corpUser1 := config.User{
 		Name:  "john doe",
 		Email: "john.doe@corporate.com",
@@ -73,6 +78,31 @@ func TestFindBestMatch(t *testing.T) {
 		}
 
 		want := &corpUser1
+		have := findBestMatch(conf, repoInfo)
+
+		assert.Equal(t, want, have)
+	})
+
+	t.Run("match name override", func(t *testing.T) {
+		repoName := "override"
+		conf := config.HostV2{
+			Default: &defaultUser,
+			Overrides: []config.Override{
+				{
+					Owner: defaultUser.Name,
+					Repo:  repoName,
+					User:  otherUser,
+				},
+			},
+		}
+
+		repoInfo := git.RepoInfo{
+			Host:  "github.com",
+			Owner: defaultUser.Name,
+			Name:  repoName,
+		}
+
+		want := &otherUser
 		have := findBestMatch(conf, repoInfo)
 
 		assert.Equal(t, want, have)
