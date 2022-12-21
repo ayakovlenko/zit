@@ -21,6 +21,6 @@ func init() {
 	rootCmd.AddCommand(
 		identity.SetCmd,
 		version.VersionCmd,
-		doctorCmd,
+		cli.DoctorCmd,
 	)
 }

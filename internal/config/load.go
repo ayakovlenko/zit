@@ -26,6 +26,7 @@ func Load(filename string) (*ConfigV2, error) {
 		confStr := buf.String()
 		return parseYaml(confStr)
 	} else if isJsonnet {
+		fmt.Println("WARN: Jsonnet configs are deprecated and going to be unsupported in future versions. Migrate to YAML format.")
 		hostMap, err := readHostMap(filename, r)
 		if err != nil {
 			return nil, err
