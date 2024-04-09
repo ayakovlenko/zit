@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	giturls "github.com/whilp/git-urls"
+	giturls "github.com/mojotx/git-urls"
 )
 
 // ErrNoRemoteURL defines an error returned when the remote URL is not set.
