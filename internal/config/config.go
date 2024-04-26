@@ -9,7 +9,10 @@ import (
 	"path"
 
 	"github.com/google/go-jsonnet"
+	"github.com/spf13/afero"
 )
+
+var AppFs1 = afero.NewMemMapFs()
 
 // EnvVarName TODO
 const EnvVarName = "ZIT_CONFIG"
@@ -71,9 +74,9 @@ func readHostMap(filename string, r io.Reader) (*HostMap, error) {
 }
 
 // LocateConfFile locates the path of the configuration file.
-func LocateConfFile() (string, error) {
+func LocateConfFile(fs afero.Fs, home, envVar string) (string, error) {
 	fileExists := func(filename string) bool {
-		info, err := os.Stat(filename)
+		info, err := fs.Stat(filename)
 		if os.IsNotExist(err) {
 			return false
 		}
@@ -82,22 +85,15 @@ func LocateConfFile() (string, error) {
 
 	var confPath string
 
-	// check ZIT_CONFIG env variable
-	confPath, defined := os.LookupEnv(EnvVarName)
-
 	// if ZIT_CONFIG is not set, try default location
-	if !defined {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return "", err
-		}
-
+	envVarDefined := envVar != ""
+	if !envVarDefined {
 		confPath = path.Join(home, ".zit", "config.jsonnet")
 	}
 
 	if !fileExists(confPath) {
 		return "", &ErrConfigNotFound{
-			EnvVar: defined,
+			EnvVar: envVarDefined,
 			Path:   confPath,
 		}
 	}

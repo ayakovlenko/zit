@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"os"
 	"zit/internal/cli"
 	"zit/internal/identity"
 	"zit/internal/version"
@@ -9,7 +11,10 @@ import (
 )
 
 func main() {
-	cli.PrintlnExit(rootCmd.Execute())
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }
 
 var rootCmd = &cobra.Command{
