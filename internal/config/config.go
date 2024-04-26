@@ -108,10 +108,7 @@ func toV2(hostMap *HostMap) *ConfigV2 {
 		Hosts: map[string]HostV2{},
 	}
 	for host, hostConfig := range *hostMap {
-		configV2.Hosts[host] = HostV2{
-			Default:   hostConfig.Default,
-			Overrides: hostConfig.Overrides,
-		}
+		configV2.Hosts[host] = HostV2(hostConfig)
 	}
 	return &configV2
 }

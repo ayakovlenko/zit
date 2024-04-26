@@ -13,7 +13,7 @@ type HostV2 struct {
 
 // Get TODO
 func (c *ConfigV2) Get(host string) (*HostV2, error) {
-	hostConf, ok := (*&c.Hosts)[host]
+	hostConf, ok := (c.Hosts)[host]
 	if !ok {
 		return nil, fmt.Errorf("cannot find config for host %q", host)
 	}
