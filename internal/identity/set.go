@@ -17,6 +17,8 @@ var SetCmd = &cobra.Command{
 	Use:   "set",
 	Short: "Set git identity",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		fs := afero.NewOsFs()
+
 		if err := ensureGitDir(); err != nil {
 			return err
 		}
@@ -27,7 +29,7 @@ var SetCmd = &cobra.Command{
 		}
 
 		confPath, err := config.LocateConfFile(
-			afero.NewOsFs(),
+			fs,
 			userHomeDir,
 			os.Getenv(config.EnvVarName),
 		)
@@ -35,7 +37,7 @@ var SetCmd = &cobra.Command{
 			return err
 		}
 
-		conf, err := config.Load(confPath)
+		conf, err := config.Load(fs, confPath)
 		if err != nil {
 			return err
 		}

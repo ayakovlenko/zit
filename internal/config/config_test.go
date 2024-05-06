@@ -1,6 +1,7 @@
 package config
 
 import (
+	"embed"
 	"testing"
 
 	"github.com/spf13/afero"
@@ -29,6 +30,55 @@ func TestLocateConfig(t *testing.T) {
 
 		if have != want {
 			t.Errorf("want: %s, have: %s", want, have)
+		}
+	})
+}
+
+//go:embed test_data/*
+var testConfigsEmbed embed.FS
+var testConfigs = afero.FromIOFS{FS: testConfigsEmbed}
+
+func TestLoad(t *testing.T) {
+
+	t.Run("unsupported config", func(t *testing.T) {
+		_, err := Load(testConfigs, "test_data/config_00.txt")
+
+		if err != ErrUnsupportedConfigFormat {
+			t.Errorf("want: ErrUnsupportedConfigFormat; have: %+v", err)
+		}
+	})
+
+	t.Run("simple Jsonnet config", func(t *testing.T) {
+		config, _ := Load(testConfigs, "test_data/config_01.jsonnet")
+
+		host, _ := config.Get("github.corp.com")
+
+		name := host.Default.Name
+		email := host.Default.Email
+
+		if name != "John Doe" {
+			t.Errorf("want: John Doe; have: %s", name)
+		}
+
+		if email != "john.doe@corp.com" {
+			t.Errorf("want: john.doe@corp.com; have: %s", email)
+		}
+	})
+
+	t.Run("simple YAML config", func(t *testing.T) {
+		config, _ := Load(testConfigs, "test_data/config_01.yaml")
+
+		host, _ := config.Get("github.corp.com")
+
+		name := host.Default.Name
+		email := host.Default.Email
+
+		if name != "John Doe" {
+			t.Errorf("want: John Doe; have: %s", name)
+		}
+
+		if email != "john.doe@corp.com" {
+			t.Errorf("want: john.doe@corp.com; have: %s", email)
 		}
 	})
 }

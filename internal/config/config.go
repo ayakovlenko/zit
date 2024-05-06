@@ -1,15 +1,7 @@
 package config
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io"
-	"os"
-	"path"
-
-	"github.com/google/go-jsonnet"
-	"github.com/spf13/afero"
 )
 
 // EnvVarName TODO
@@ -63,57 +55,4 @@ func (c *ConfigRoot) Get(host string) (*HostConfig, error) {
 	}
 
 	return &hostConf, nil
-}
-
-// ReadHostMap TODO
-func readHostMap(filename string, r io.Reader) (*HostMap, error) {
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(r)
-	confStr := buf.String()
-
-	vm := jsonnet.MakeVM()
-	confJSON, err := vm.EvaluateSnippet(filename, confStr)
-	if err != nil {
-		return nil, err
-	}
-
-	var hostMap HostMap
-	if err := json.Unmarshal([]byte(confJSON), &hostMap); err != nil {
-		return nil, err
-	}
-
-	return &hostMap, nil
-}
-
-// LocateConfFile locates the path of the configuration file.
-func LocateConfFile(fs afero.Fs, userHomeDir, confPathFromEnv string) (string, error) {
-	var confPath string
-
-	// if ZIT_CONFIG is not set, try default location
-	envVarDefined := confPathFromEnv != ""
-	if envVarDefined {
-		confPath = confPathFromEnv
-	} else {
-		confPath = path.Join(userHomeDir, ".zit", "config.jsonnet")
-	}
-
-	if !fileExists(fs, confPath) {
-		return "", &ErrConfigNotFound{
-			EnvVar: envVarDefined,
-			Path:   confPath,
-		}
-	}
-
-	return confPath, nil
-}
-
-func fileExists(fs afero.Fs, filename string) bool {
-	fileInfo, err := fs.Stat(filename)
-	if os.IsNotExist(err) {
-		return false
-	}
-	if fileInfo.IsDir() {
-		return false
-	}
-	return true
 }
