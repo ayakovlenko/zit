@@ -21,15 +21,16 @@ var SetCmd = &cobra.Command{
 			return err
 		}
 
-		home, err := os.UserHomeDir()
+		userHomeDir, err := os.UserHomeDir()
 		if err != nil {
 			return err
 		}
 
-		// check ZIT_CONFIG env variable
-		envVar := os.Getenv(config.EnvVarName)
-
-		confPath, err := config.LocateConfFile(afero.NewOsFs(), home, envVar)
+		confPath, err := config.LocateConfFile(
+			afero.NewOsFs(),
+			userHomeDir,
+			os.Getenv(config.EnvVarName),
+		)
 		if err != nil {
 			return err
 		}

@@ -7,11 +7,23 @@ import (
 	"strings"
 )
 
-func Load(filename string) (*ConfigV2, error) {
-	isYaml := strings.HasSuffix(filename, ".yaml")
-	isJsonnet := strings.HasSuffix(filename, ".jsonnet")
+const (
+	yamlFormat    = "yaml"
+	jsonnetFormat = "jsonnet"
+	otherFormat   = "other"
+)
 
-	if !isYaml && !isJsonnet {
+func Load(filename string) (*ConfigV2, error) {
+	var format string
+	if strings.HasSuffix(filename, ".yaml") {
+		format = yamlFormat
+	} else if strings.HasSuffix(filename, ".jsonnet") {
+		format = jsonnetFormat
+	} else {
+		format = otherFormat
+	}
+
+	if format != yamlFormat && format != jsonnetFormat {
 		return nil, fmt.Errorf("unsupported config format")
 	}
 
@@ -19,13 +31,15 @@ func Load(filename string) (*ConfigV2, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer r.Close()
 
-	if isYaml {
+	switch format {
+	case yamlFormat:
 		buf := new(bytes.Buffer)
 		buf.ReadFrom(r)
 		confStr := buf.String()
 		return parseYaml(confStr)
-	} else if isJsonnet {
+	case jsonnetFormat:
 		fmt.Println("WARN: Jsonnet configs are deprecated and going to be unsupported in future versions. Migrate to YAML format.")
 		hostMap, err := readHostMap(filename, r)
 		if err != nil {
@@ -33,7 +47,17 @@ func Load(filename string) (*ConfigV2, error) {
 		}
 		configV2 := toV2(hostMap)
 		return configV2, nil
-	} else {
+	default:
 		return nil, fmt.Errorf("something went horribly wrong")
 	}
+}
+
+func toV2(hostMap *HostMap) *ConfigV2 {
+	configV2 := ConfigV2{
+		Hosts: map[string]HostV2{},
+	}
+	for host, hostConfig := range *hostMap {
+		configV2.Hosts[host] = HostV2(hostConfig)
+	}
+	return &configV2
 }
