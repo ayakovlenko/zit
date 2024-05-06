@@ -12,8 +12,6 @@ import (
 	"github.com/spf13/afero"
 )
 
-var AppFs1 = afero.NewMemMapFs()
-
 // EnvVarName TODO
 const EnvVarName = "ZIT_CONFIG"
 
