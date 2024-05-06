@@ -27,7 +27,7 @@ var SetCmd = &cobra.Command{
 		}
 
 		// check ZIT_CONFIG env variable
-		envVar, _ := os.LookupEnv(config.EnvVarName)
+		envVar := os.Getenv(config.EnvVarName)
 
 		confPath, err := config.LocateConfFile(afero.NewOsFs(), home, envVar)
 		if err != nil {

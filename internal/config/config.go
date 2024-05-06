@@ -73,23 +73,17 @@ func readHostMap(filename string, r io.Reader) (*HostMap, error) {
 
 // LocateConfFile locates the path of the configuration file.
 func LocateConfFile(fs afero.Fs, home, envVar string) (string, error) {
-	fileExists := func(filename string) bool {
-		info, err := fs.Stat(filename)
-		if os.IsNotExist(err) {
-			return false
-		}
-		return !info.IsDir()
-	}
-
 	var confPath string
 
 	// if ZIT_CONFIG is not set, try default location
 	envVarDefined := envVar != ""
-	if !envVarDefined {
+	if envVarDefined {
+		confPath = envVar
+	} else {
 		confPath = path.Join(home, ".zit", "config.jsonnet")
 	}
 
-	if !fileExists(confPath) {
+	if !fileExists(fs, confPath) {
 		return "", &ErrConfigNotFound{
 			EnvVar: envVarDefined,
 			Path:   confPath,
@@ -97,6 +91,17 @@ func LocateConfFile(fs afero.Fs, home, envVar string) (string, error) {
 	}
 
 	return confPath, nil
+}
+
+func fileExists(fs afero.Fs, filename string) bool {
+	fileInfo, err := fs.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	if fileInfo.IsDir() {
+		return false
+	}
+	return true
 }
 
 // ---
