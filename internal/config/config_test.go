@@ -7,7 +7,6 @@ import (
 )
 
 func TestLocateConfig(t *testing.T) {
-
 	t.Run("get Jsonnet config if it exists", func(t *testing.T) {
 		fs := afero.NewMemMapFs()
 		_, _ = fs.Create("/home/.zit/config.jsonnet")
@@ -34,7 +33,6 @@ func TestLocateConfig(t *testing.T) {
 }
 
 func TestLoad(t *testing.T) {
-
 	t.Run("unsupported config", func(t *testing.T) {
 		_, err := Load("test_data/config_00.txt")
 

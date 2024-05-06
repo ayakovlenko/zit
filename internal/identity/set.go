@@ -63,14 +63,14 @@ defined in the configuration file:
 			return err
 		}
 
-		hostConf, err := conf.Get((*repo).Host)
+		hostConf, err := conf.Get(repo.Host)
 		if err != nil {
 			return err
 		}
 
 		cred := findBestMatch(*hostConf, *repo)
 		if cred == nil {
-			return fmt.Errorf("cannot find a match for host %q", (*repo).Host)
+			return fmt.Errorf("cannot find a match for host %q", repo.Host)
 		}
 
 		dryRun, err := cmd.Flags().GetBool(dryRunFlag)

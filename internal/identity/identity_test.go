@@ -9,7 +9,6 @@ import (
 )
 
 func TestFindBestMatch(t *testing.T) {
-
 	defaultUser := config.User{
 		Name:  "john doe",
 		Email: "john.doe@gmail.com",
