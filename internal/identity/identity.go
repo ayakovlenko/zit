@@ -5,7 +5,7 @@ import (
 	"zit/internal/git"
 )
 
-func findBestMatch(conf config.HostV2, repo git.RepoInfo) (user *config.User) {
+func findBestMatch(conf config.HostConfig, repo git.RepoInfo) (user *config.User) {
 	if conf.Default != nil {
 		user = &config.User{
 			Name:  conf.Default.Name,

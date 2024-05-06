@@ -30,12 +30,12 @@ func (err *ErrConfigNotFound) Error() string {
 }
 
 // HostMap TODO
-type HostMap map[string]Config
+type HostMap map[string]HostConfig
 
-// Config TODO
-type Config struct {
-	Default   *User      `json:"default"`
-	Overrides []Override `json:"overrides"`
+// HostConfig TODO
+type HostConfig struct {
+	Default   *User      `json:"default" yaml:"default"`
+	Overrides []Override `json:"overrides" yaml:"overrides"`
 }
 
 // User TODO
@@ -49,6 +49,20 @@ type Override struct {
 	Owner string `json:"owner" yaml:"owner"`
 	Repo  string `json:"repo,omitempty" yaml:"repo"`
 	User  User   `json:"user" yaml:"user"`
+}
+
+type ConfigRoot struct {
+	Hosts map[string]HostConfig `yaml:"hosts"`
+}
+
+// Get TODO
+func (c *ConfigRoot) Get(host string) (*HostConfig, error) {
+	hostConf, ok := (c.Hosts)[host]
+	if !ok {
+		return nil, fmt.Errorf("cannot find config for host %q", host)
+	}
+
+	return &hostConf, nil
 }
 
 // ReadHostMap TODO

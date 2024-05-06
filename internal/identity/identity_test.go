@@ -36,7 +36,7 @@ func TestFindBestMatch(t *testing.T) {
 	}
 
 	t.Run("match default user", func(t *testing.T) {
-		conf := config.HostV2{
+		conf := config.HostConfig{
 			Default: &defaultUser,
 			Overrides: []config.Override{
 				{
@@ -60,7 +60,7 @@ func TestFindBestMatch(t *testing.T) {
 	})
 
 	t.Run("match owner override", func(t *testing.T) {
-		conf := config.HostV2{
+		conf := config.HostConfig{
 			Default: &defaultUser,
 			Overrides: []config.Override{
 				{
@@ -85,7 +85,7 @@ func TestFindBestMatch(t *testing.T) {
 
 	t.Run("match name override", func(t *testing.T) {
 		repoName := "override"
-		conf := config.HostV2{
+		conf := config.HostConfig{
 			Default: &defaultUser,
 			Overrides: []config.Override{
 				{
@@ -109,7 +109,7 @@ func TestFindBestMatch(t *testing.T) {
 	})
 
 	t.Run("match repo override", func(t *testing.T) {
-		conf := config.HostV2{
+		conf := config.HostConfig{
 			Default: &defaultUser,
 			Overrides: []config.Override{
 				{
@@ -133,7 +133,7 @@ func TestFindBestMatch(t *testing.T) {
 	})
 
 	t.Run("match repo and owner override", func(t *testing.T) {
-		conf := config.HostV2{
+		conf := config.HostConfig{
 			Default: &defaultUser,
 			Overrides: []config.Override{
 				{

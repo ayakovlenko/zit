@@ -13,7 +13,7 @@ const (
 	otherFormat   = "other"
 )
 
-func Load(filename string) (*ConfigV2, error) {
+func Load(filename string) (*ConfigRoot, error) {
 	var format string
 	if strings.HasSuffix(filename, ".yaml") {
 		format = yamlFormat
@@ -45,19 +45,11 @@ func Load(filename string) (*ConfigV2, error) {
 		if err != nil {
 			return nil, err
 		}
-		configV2 := toV2(hostMap)
-		return configV2, nil
+		config := ConfigRoot{
+			Hosts: *hostMap,
+		}
+		return &config, nil
 	default:
 		return nil, fmt.Errorf("something went horribly wrong")
 	}
-}
-
-func toV2(hostMap *HostMap) *ConfigV2 {
-	configV2 := ConfigV2{
-		Hosts: map[string]HostV2{},
-	}
-	for host, hostConfig := range *hostMap {
-		configV2.Hosts[host] = HostV2(hostConfig)
-	}
-	return &configV2
 }
