@@ -37,7 +37,7 @@ var SetCmd = &cobra.Command{
 			return err
 		}
 
-		conf, err := config.Load(fs, confPath)
+		conf, err := config.Load(confPath)
 		if err != nil {
 			return err
 		}

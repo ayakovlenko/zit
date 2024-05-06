@@ -1,10 +1,8 @@
 package config
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"path"
 	"strings"
@@ -22,7 +20,7 @@ const (
 
 var ErrUnsupportedConfigFormat = fmt.Errorf("unsupported config format")
 
-func Load(fs afero.Fs, filename string) (*ConfigRoot, error) {
+func Load(filename string) (*ConfigRoot, error) {
 	format := formatFromFilename(filename)
 
 	if format != yamlFormat && format != jsonnetFormat {
@@ -31,23 +29,14 @@ func Load(fs afero.Fs, filename string) (*ConfigRoot, error) {
 
 	switch format {
 	case yamlFormat:
-		r, err := os.Open(filename)
+		contents, err := os.ReadFile(filename)
 		if err != nil {
 			return nil, err
 		}
-		defer r.Close()
-		buf := new(bytes.Buffer)
-		buf.ReadFrom(r)
-		confStr := buf.String()
-		return parseYaml(confStr)
+		return parseYaml(contents)
 	case jsonnetFormat:
 		fmt.Println("WARN: Jsonnet configs are deprecated and going to be unsupported in future versions. Migrate to YAML format.")
-		r, err := os.Open(filename)
-		if err != nil {
-			return nil, err
-		}
-		defer r.Close()
-		return parseJsonnet(filename, r)
+		return parseJsonnet(filename)
 	default:
 		return nil, fmt.Errorf("something went horribly wrong")
 	}
@@ -95,13 +84,9 @@ func fileExists(fs afero.Fs, filename string) bool {
 	return true
 }
 
-func parseJsonnet(filename string, r io.Reader) (*ConfigRoot, error) {
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(r)
-	confStr := buf.String()
-
+func parseJsonnet(filename string) (*ConfigRoot, error) {
 	vm := jsonnet.MakeVM()
-	confJSON, err := vm.EvaluateAnonymousSnippet(filename, confStr)
+	confJSON, err := vm.EvaluateFile(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -111,14 +96,12 @@ func parseJsonnet(filename string, r io.Reader) (*ConfigRoot, error) {
 		return nil, err
 	}
 
-	return &ConfigRoot{
-		Hosts,
-	}, nil
+	return &ConfigRoot{Hosts}, nil
 }
 
-func parseYaml(s string) (*ConfigRoot, error) {
+func parseYaml(contents []byte) (*ConfigRoot, error) {
 	var config ConfigRoot
-	if err := yaml.Unmarshal([]byte(s), &config); err != nil {
+	if err := yaml.Unmarshal(contents, &config); err != nil {
 		return nil, err
 	}
 	return &config, nil
