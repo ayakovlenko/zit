@@ -1,14 +1,7 @@
 package config
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io"
-	"os"
-	"path"
-
-	"github.com/google/go-jsonnet"
 )
 
 // EnvVarName TODO
@@ -29,12 +22,12 @@ func (err *ErrConfigNotFound) Error() string {
 }
 
 // HostMap TODO
-type HostMap map[string]Config
+type HostMap map[string]HostConfig
 
-// Config TODO
-type Config struct {
-	Default   *User      `json:"default"`
-	Overrides []Override `json:"overrides"`
+// HostConfig TODO
+type HostConfig struct {
+	Default   *User      `json:"default" yaml:"default"`
+	Overrides []Override `json:"overrides" yaml:"overrides"`
 }
 
 // User TODO
@@ -50,72 +43,16 @@ type Override struct {
 	User  User   `json:"user" yaml:"user"`
 }
 
-// ReadHostMap TODO
-func readHostMap(filename string, r io.Reader) (*HostMap, error) {
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(r)
-	confStr := buf.String()
-
-	vm := jsonnet.MakeVM()
-	confJSON, err := vm.EvaluateSnippet(filename, confStr)
-	if err != nil {
-		return nil, err
-	}
-
-	var hostMap HostMap
-	if err := json.Unmarshal([]byte(confJSON), &hostMap); err != nil {
-		return nil, err
-	}
-
-	return &hostMap, nil
+type ConfigRoot struct {
+	Hosts map[string]HostConfig `yaml:"hosts"`
 }
 
-// LocateConfFile locates the path of the configuration file.
-func LocateConfFile() (string, error) {
-	fileExists := func(filename string) bool {
-		info, err := os.Stat(filename)
-		if os.IsNotExist(err) {
-			return false
-		}
-		return !info.IsDir()
+// Get TODO
+func (c *ConfigRoot) Get(host string) (*HostConfig, error) {
+	hostConf, ok := (c.Hosts)[host]
+	if !ok {
+		return nil, fmt.Errorf("cannot find config for host %q", host)
 	}
 
-	var confPath string
-
-	// check ZIT_CONFIG env variable
-	confPath, defined := os.LookupEnv(EnvVarName)
-
-	// if ZIT_CONFIG is not set, try default location
-	if !defined {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return "", err
-		}
-
-		confPath = path.Join(home, ".zit", "config.jsonnet")
-	}
-
-	if !fileExists(confPath) {
-		return "", &ErrConfigNotFound{
-			EnvVar: defined,
-			Path:   confPath,
-		}
-	}
-
-	return confPath, nil
-}
-
-// ---
-
-func toV2(hostMap *HostMap) *ConfigV2 {
-	configV2 := ConfigV2{
-		Hosts: map[string]HostV2{},
-	}
-	for host, hostConfig := range *hostMap {
-		configV2.Hosts[host] = HostV2{
-			Default:   hostConfig.Default,
-			Overrides: hostConfig.Overrides,
-		}
-	}
-	return &configV2
+	return &hostConf, nil
 }

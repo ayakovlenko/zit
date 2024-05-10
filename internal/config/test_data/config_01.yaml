@@ -1,0 +1,13 @@
+{
+  users: {
+    work: &work_user {
+      name: "John Doe",
+      email: "john.doe@corp.com"
+    },
+  },
+  "hosts": {
+    "github.corp.com": {
+      "default": *work_user
+    }
+  }
+}

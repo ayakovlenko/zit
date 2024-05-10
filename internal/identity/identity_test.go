@@ -9,7 +9,6 @@ import (
 )
 
 func TestFindBestMatch(t *testing.T) {
-
 	defaultUser := config.User{
 		Name:  "john doe",
 		Email: "john.doe@gmail.com",
@@ -35,8 +34,25 @@ func TestFindBestMatch(t *testing.T) {
 		Email: "john.doe@corporate3.com",
 	}
 
+	t.Run("match default user when no overrides", func(t *testing.T) {
+		conf := config.HostConfig{
+			Default: &defaultUser,
+		}
+
+		repoInfo := git.RepoInfo{
+			Host:  "github.com",
+			Owner: "johndoe",
+			Name:  "repo",
+		}
+
+		want := &defaultUser
+		have := findBestMatch(conf, repoInfo)
+
+		assert.Equal(t, want, have)
+	})
+
 	t.Run("match default user", func(t *testing.T) {
-		conf := config.HostV2{
+		conf := config.HostConfig{
 			Default: &defaultUser,
 			Overrides: []config.Override{
 				{
@@ -60,7 +76,7 @@ func TestFindBestMatch(t *testing.T) {
 	})
 
 	t.Run("match owner override", func(t *testing.T) {
-		conf := config.HostV2{
+		conf := config.HostConfig{
 			Default: &defaultUser,
 			Overrides: []config.Override{
 				{
@@ -85,7 +101,7 @@ func TestFindBestMatch(t *testing.T) {
 
 	t.Run("match name override", func(t *testing.T) {
 		repoName := "override"
-		conf := config.HostV2{
+		conf := config.HostConfig{
 			Default: &defaultUser,
 			Overrides: []config.Override{
 				{
@@ -109,7 +125,7 @@ func TestFindBestMatch(t *testing.T) {
 	})
 
 	t.Run("match repo override", func(t *testing.T) {
-		conf := config.HostV2{
+		conf := config.HostConfig{
 			Default: &defaultUser,
 			Overrides: []config.Override{
 				{
@@ -133,7 +149,7 @@ func TestFindBestMatch(t *testing.T) {
 	})
 
 	t.Run("match repo and owner override", func(t *testing.T) {
-		conf := config.HostV2{
+		conf := config.HostConfig{
 			Default: &defaultUser,
 			Overrides: []config.Override{
 				{

@@ -3,10 +3,10 @@ package identity
 import (
 	"fmt"
 	"os"
-	"zit/internal/cli"
 	"zit/internal/config"
 	"zit/internal/git"
 
+	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 )
 
@@ -16,14 +16,31 @@ const dryRunFlag = "dry-run"
 var SetCmd = &cobra.Command{
 	Use:   "set",
 	Short: "Set git identity",
-	Run: func(cmd *cobra.Command, args []string) {
-		ensureGitDir()
+	RunE: func(cmd *cobra.Command, args []string) error {
+		fs := afero.NewOsFs()
 
-		confPath, err := config.LocateConfFile()
-		cli.PrintlnExit(err)
+		if err := ensureGitDir(); err != nil {
+			return err
+		}
+
+		userHomeDir, err := os.UserHomeDir()
+		if err != nil {
+			return err
+		}
+
+		confPath, err := config.LocateConfFile(
+			fs,
+			userHomeDir,
+			os.Getenv(config.EnvVarName),
+		)
+		if err != nil {
+			return err
+		}
 
 		conf, err := config.Load(confPath)
-		cli.PrintlnExit(err)
+		if err != nil {
+			return err
+		}
 
 		host, err := git.RemoteURL("origin")
 		if err != nil {
@@ -37,34 +54,42 @@ defined in the configuration file:
 `, err)
 				os.Exit(1)
 			} else {
-				cli.PrintlnExit(err)
+				return err
 			}
 		}
 
 		repo, err := git.ExtractRepoInfo(host)
-		cli.PrintlnExit(err)
+		if err != nil {
+			return err
+		}
 
-		hostConf, err := conf.Get((*repo).Host)
-		cli.PrintlnExit(err)
+		hostConf, err := conf.Get(repo.Host)
+		if err != nil {
+			return err
+		}
 
 		cred := findBestMatch(*hostConf, *repo)
 		if cred == nil {
-			cli.PrintlnExit(fmt.Errorf("cannot find a match for host %q", (*repo).Host))
+			return fmt.Errorf("cannot find a match for host %q", repo.Host)
 		}
 
 		dryRun, err := cmd.Flags().GetBool(dryRunFlag)
-		cli.PrintlnExit(err)
+		if err != nil {
+			return err
+		}
 
 		if !dryRun {
-			cli.PrintlnExit(
-				git.SetConfig("--local", "user.name", cred.Name),
-			)
-			cli.PrintlnExit(
-				git.SetConfig("--local", "user.email", cred.Email),
-			)
+			if err := git.SetConfig("--local", "user.name", cred.Name); err != nil {
+				return err
+			}
+			if err := git.SetConfig("--local", "user.email", cred.Email); err != nil {
+				return err
+			}
 		}
 
 		fmt.Printf("set user: %s <%s>\n", cred.Name, cred.Email)
+
+		return nil
 	},
 }
 
@@ -72,15 +97,19 @@ func init() {
 	SetCmd.Flags().Bool(dryRunFlag, false, "dry run")
 }
 
-func ensureGitDir() {
+func ensureGitDir() error {
 	dir, err := os.Getwd()
-	cli.PrintlnExit(err)
+	if err != nil {
+		return err
+	}
 
 	ok, err := git.IsGitDir(dir)
-	cli.PrintlnExit(err)
+	if err != nil {
+		return err
+	}
 
 	if !ok {
-		fmt.Printf(`Error: %q is not a git directory
+		fmt.Fprintf(os.Stderr, `Error: %q is not a git directory
 
 Make sure you are executing zit inside a git directory.
 
@@ -91,4 +120,6 @@ case, run:
 `, dir)
 		os.Exit(1)
 	}
+
+	return nil
 }
