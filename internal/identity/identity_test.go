@@ -34,6 +34,23 @@ func TestFindBestMatch(t *testing.T) {
 		Email: "john.doe@corporate3.com",
 	}
 
+	t.Run("match default user when no overrides", func(t *testing.T) {
+		conf := config.HostConfig{
+			Default: &defaultUser,
+		}
+
+		repoInfo := git.RepoInfo{
+			Host:  "github.com",
+			Owner: "johndoe",
+			Name:  "repo",
+		}
+
+		want := &defaultUser
+		have := findBestMatch(conf, repoInfo)
+
+		assert.Equal(t, want, have)
+	})
+
 	t.Run("match default user", func(t *testing.T) {
 		conf := config.HostConfig{
 			Default: &defaultUser,
