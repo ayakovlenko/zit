@@ -60,20 +60,23 @@ func LocateConfFile(fs afero.Fs, userHomeDir, confPathFromEnv string) (string, e
 
 	// if ZIT_CONFIG is not set, try default location
 	envVarDefined := confPathFromEnv != ""
-	if envVarDefined {
-		confPath = confPathFromEnv
-	} else if fileExists(fs, jsonnetDefault) {
-		confPath = path.Join(userHomeDir, ".zit", "config.jsonnet")
-	} else if fileExists(fs, yamlDefault) {
-		confPath = path.Join(userHomeDir, ".zit", "config.yaml")
-	} else {
+
+	if !envVarDefined {
+		if fileExists(fs, jsonnetDefault) {
+			return jsonnetDefault, nil
+		} else {
+			return yamlDefault, nil
+		}
+	}
+
+	if !fileExists(fs, confPathFromEnv) {
 		return "", &ErrConfigNotFound{
 			EnvVar: envVarDefined,
 			Path:   confPath,
 		}
 	}
 
-	return confPath, nil
+	return confPathFromEnv, nil
 }
 
 func fileExists(fs afero.Fs, filename string) bool {
