@@ -7,19 +7,26 @@ import (
 	"zit/internal/git"
 
 	"github.com/spf13/afero"
-	"github.com/spf13/cobra"
+	"github.com/urfave/cli/v2"
 )
 
 const dryRunFlag = "dry-run"
 
 // SetCmd is a command that sets git identity based on the configuration file.
-var SetCmd = &cobra.Command{
-	Use:   "set",
-	Short: "Set git identity",
-	RunE: func(cmd *cobra.Command, args []string) error {
+var SetCmd = &cli.Command{
+	Name:  "set",
+	Usage: "Set git identity",
+	Flags: []cli.Flag{
+		&cli.BoolFlag{
+			Name:  dryRunFlag,
+			Value: false,
+			Usage: "run without applying configurations",
+		},
+	},
+	Action: func(cCtx *cli.Context) error {
 		fs := afero.NewOsFs()
 
-		if err := ensureGitDir(); err != nil {
+		if err := git.EnsureGitDir(); err != nil {
 			return err
 		}
 
@@ -73,10 +80,7 @@ defined in the configuration file:
 			return fmt.Errorf("cannot find a match for host %q", repo.Host)
 		}
 
-		dryRun, err := cmd.Flags().GetBool(dryRunFlag)
-		if err != nil {
-			return err
-		}
+		dryRun := cCtx.Bool(dryRunFlag)
 
 		if !dryRun {
 			if err := git.SetConfig("--local", "user.name", cred.Name); err != nil {
@@ -87,39 +91,12 @@ defined in the configuration file:
 			}
 		}
 
+		if dryRun {
+			fmt.Printf("[dry-run] ")
+		}
+
 		fmt.Printf("set user: %s <%s>\n", cred.Name, cred.Email)
 
 		return nil
 	},
-}
-
-func init() {
-	SetCmd.Flags().Bool(dryRunFlag, false, "dry run")
-}
-
-func ensureGitDir() error {
-	dir, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-
-	ok, err := git.IsGitDir(dir)
-	if err != nil {
-		return err
-	}
-
-	if !ok {
-		fmt.Fprintf(os.Stderr, `Error: %q is not a git directory
-
-Make sure you are executing zit inside a git directory.
-
-If you are, perhaps you have forgotten to initialize a new repository? In this
-case, run:
-
-    git init
-`, dir)
-		os.Exit(1)
-	}
-
-	return nil
 }

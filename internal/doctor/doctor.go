@@ -77,8 +77,7 @@ var checks = []check{
 	systemEmail,
 }
 
-// RunChecks runs all checks.
-func RunChecks() error {
+func runChecks() error {
 	outs := []string{}
 	for _, check := range checks {
 		ok, err := check.CheckFunc()
