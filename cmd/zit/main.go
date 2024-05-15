@@ -3,29 +3,26 @@ package main
 import (
 	"fmt"
 	"os"
-	"zit/internal/cli"
+	"zit/internal/doctor"
 	"zit/internal/identity"
 	"zit/internal/version"
 
-	"github.com/spf13/cobra"
+	"github.com/urfave/cli/v2"
 )
 
 func main() {
-	if err := rootCmd.Execute(); err != nil {
+	app := &cli.App{
+		Name:  "zit",
+		Usage: "git identity manager",
+		Commands: []*cli.Command{
+			version.VersionCmd,
+			doctor.DoctorCmd,
+			identity.SetCmd,
+		},
+	}
+
+	if err := app.Run(os.Args); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-}
-
-var rootCmd = &cobra.Command{
-	Use:   "zit",
-	Short: "git identity manager",
-}
-
-func init() {
-	rootCmd.AddCommand(
-		identity.SetCmd,
-		version.VersionCmd,
-		cli.DoctorCmd,
-	)
 }

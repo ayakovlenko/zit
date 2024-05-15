@@ -2,6 +2,7 @@ package git
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -141,4 +142,31 @@ func IsGitDir(dir string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func EnsureGitDir() error {
+	dir, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	ok, err := IsGitDir(dir)
+	if err != nil {
+		return err
+	}
+
+	if !ok {
+		fmt.Fprintf(os.Stderr, `Error: %q is not a git directory
+
+Make sure you are executing zit inside a git directory.
+
+If you are, perhaps you have forgotten to initialize a new repository? In this
+case, run:
+
+    git init
+`, dir)
+		os.Exit(1)
+	}
+
+	return nil
 }
