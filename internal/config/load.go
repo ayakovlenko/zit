@@ -55,22 +55,28 @@ func formatFromFilename(filename string) string {
 func LocateConfFile(fs afero.Fs, userHomeDir, confPathFromEnv string) (string, error) {
 	var confPath string
 
+	jsonnetDefault := path.Join(userHomeDir, ".zit", "config.jsonnet")
+	yamlDefault := path.Join(userHomeDir, ".zit", "config.yaml")
+
 	// if ZIT_CONFIG is not set, try default location
 	envVarDefined := confPathFromEnv != ""
-	if envVarDefined {
-		confPath = confPathFromEnv
-	} else {
-		confPath = path.Join(userHomeDir, ".zit", "config.jsonnet")
+
+	if !envVarDefined {
+		if fileExists(fs, jsonnetDefault) {
+			return jsonnetDefault, nil
+		} else {
+			return yamlDefault, nil
+		}
 	}
 
-	if !fileExists(fs, confPath) {
+	if !fileExists(fs, confPathFromEnv) {
 		return "", &ErrConfigNotFound{
 			EnvVar: envVarDefined,
 			Path:   confPath,
 		}
 	}
 
-	return confPath, nil
+	return confPathFromEnv, nil
 }
 
 func fileExists(fs afero.Fs, filename string) bool {
