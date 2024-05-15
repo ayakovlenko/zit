@@ -43,7 +43,7 @@ There are 2 ways to set up a configuration file:
 2. Specify an environment variable that points to the config file:
 
 ```bash
-export ZIT_CONFIG=~/.zit-config.yaml
+export ZIT_CONFIG=/custom-location/.zit-config.yaml
 ```
 
 If the environment variable is set up, it will be chosen over the config at the
