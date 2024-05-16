@@ -24,9 +24,11 @@ var SetCmd = &cli.Command{
 		},
 	},
 	Action: func(cCtx *cli.Context) error {
+		gitClient := git.NewGitClient()
+
 		fs := afero.NewOsFs()
 
-		if err := git.EnsureGitDir(); err != nil {
+		if err := git.EnsureGitDir(gitClient); err != nil {
 			return err
 		}
 
@@ -49,7 +51,7 @@ var SetCmd = &cli.Command{
 			return err
 		}
 
-		host, err := git.RemoteURL("origin")
+		host, err := git.RemoteURL(gitClient, "origin")
 		if err != nil {
 			if _, ok := err.(*git.ErrNoRemoteURL); ok {
 				fmt.Printf(`Error: %s
@@ -83,10 +85,10 @@ defined in the configuration file:
 		dryRun := cCtx.Bool(dryRunFlag)
 
 		if !dryRun {
-			if err := git.SetConfig("--local", "user.name", cred.Name); err != nil {
+			if err := git.SetConfig(gitClient, "--local", "user.name", cred.Name); err != nil {
 				return err
 			}
-			if err := git.SetConfig("--local", "user.email", cred.Email); err != nil {
+			if err := git.SetConfig(gitClient, "--local", "user.email", cred.Email); err != nil {
 				return err
 			}
 		}

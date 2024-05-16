@@ -12,11 +12,13 @@ type check struct {
 	// FixFunc   func() (bool, error)
 }
 
-var (
-	useConfigOnly = check{
+func runChecks() error {
+	gitClient := git.NewGitClient()
+
+	useConfigOnly := check{
 		Name: "git config --global user.useConfigOnly true",
 		CheckFunc: func() (bool, error) {
-			out, err := git.GetConfig("--global", "user.useConfigOnly")
+			out, err := git.GetConfig(gitClient, "--global", "user.useConfigOnly")
 			if err != nil {
 				return false, err
 			}
@@ -24,10 +26,10 @@ var (
 		},
 	}
 
-	globalUserName = check{
+	globalUserName := check{
 		Name: "git config --unset-all --global user.name",
 		CheckFunc: func() (bool, error) {
-			out, err := git.GetConfig("--global", "user.name")
+			out, err := git.GetConfig(gitClient, "--global", "user.name")
 			if err != nil {
 				return false, err
 			}
@@ -35,10 +37,10 @@ var (
 		},
 	}
 
-	globalEmail = check{
+	globalEmail := check{
 		Name: "git config --unset-all --global user.email",
 		CheckFunc: func() (bool, error) {
-			out, err := git.GetConfig("--global", "user.email")
+			out, err := git.GetConfig(gitClient, "--global", "user.email")
 			if err != nil {
 				return false, err
 			}
@@ -46,10 +48,10 @@ var (
 		},
 	}
 
-	systemUserName = check{
+	systemUserName := check{
 		Name: "git config --unset-all --system user.name",
 		CheckFunc: func() (bool, error) {
-			out, err := git.GetConfig("--system", "user.name")
+			out, err := git.GetConfig(gitClient, "--system", "user.name")
 			if err != nil {
 				return false, err
 			}
@@ -57,27 +59,25 @@ var (
 		},
 	}
 
-	systemEmail = check{
+	systemEmail := check{
 		Name: "git config --unset-all --system user.email",
 		CheckFunc: func() (bool, error) {
-			out, err := git.GetConfig("--system", "user.email")
+			out, err := git.GetConfig(gitClient, "--system", "user.email")
 			if err != nil {
 				return false, err
 			}
 			return out == "", nil
 		},
 	}
-)
 
-var checks = []check{
-	useConfigOnly,
-	globalUserName,
-	globalEmail,
-	systemUserName,
-	systemEmail,
-}
+	var checks = []check{
+		useConfigOnly,
+		globalUserName,
+		globalEmail,
+		systemUserName,
+		systemEmail,
+	}
 
-func runChecks() error {
 	outs := []string{}
 	for _, check := range checks {
 		ok, err := check.CheckFunc()
