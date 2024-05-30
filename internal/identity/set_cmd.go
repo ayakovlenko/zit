@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"os"
 	"zit/internal/config"
-	"zit/internal/git"
+	"zit/internal/gitutil"
+	"zit/pkg/git"
 
 	"github.com/spf13/afero"
 	"github.com/urfave/cli/v2"
@@ -28,7 +29,7 @@ var SetCmd = &cli.Command{
 
 		fs := afero.NewOsFs()
 
-		if err := git.EnsureGitDir(gitClient); err != nil {
+		if err := gitutil.EnsureGitDir(gitClient); err != nil {
 			return err
 		}
 
@@ -51,9 +52,9 @@ var SetCmd = &cli.Command{
 			return err
 		}
 
-		host, err := git.RemoteURL(gitClient, "origin")
+		host, err := gitutil.RemoteURL(gitClient, "origin")
 		if err != nil {
-			if _, ok := err.(*git.ErrNoRemoteURL); ok {
+			if _, ok := err.(*gitutil.ErrNoRemoteURL); ok {
 				fmt.Printf(`Error: %s
 
 Add remote URL so that zit could use it for choosing the correct git identity as
@@ -67,7 +68,7 @@ defined in the configuration file:
 			}
 		}
 
-		repo, err := git.ExtractRepoInfo(host)
+		repo, err := gitutil.ExtractRepoInfo(host)
 		if err != nil {
 			return err
 		}
@@ -85,10 +86,10 @@ defined in the configuration file:
 		dryRun := cCtx.Bool(dryRunFlag)
 
 		if !dryRun {
-			if err := git.SetConfig(gitClient, "--local", "user.name", cred.Name); err != nil {
+			if err := gitutil.SetConfig(gitClient, "--local", "user.name", cred.Name); err != nil {
 				return err
 			}
-			if err := git.SetConfig(gitClient, "--local", "user.email", cred.Email); err != nil {
+			if err := gitutil.SetConfig(gitClient, "--local", "user.email", cred.Email); err != nil {
 				return err
 			}
 		}

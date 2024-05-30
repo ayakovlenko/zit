@@ -39,34 +39,3 @@ func (r *realGitClient) Exec(args ...string) (string, error) {
 func NewGitClient() GitClient {
 	return &realGitClient{}
 }
-
-// ---
-
-type gitTuple struct {
-	s string
-	e error
-}
-
-type mockGitClient struct {
-	commands map[string]gitTuple
-}
-
-func NewMockGitClient() *mockGitClient {
-	return &mockGitClient{
-		commands: make(map[string]gitTuple),
-	}
-}
-
-func (m *mockGitClient) Exec(args ...string) (string, error) {
-	cmd := strings.Join(args, " ")
-
-	if t, ok := m.commands[cmd]; ok {
-		return t.s, t.e
-	}
-
-	return "", fmt.Errorf("command %q not found in mock", cmd)
-}
-
-func (m *mockGitClient) AddCommand(args []string, s string, e error) {
-	m.commands[strings.Join(args, " ")] = gitTuple{s, e}
-}

@@ -3,7 +3,7 @@ package identity
 import (
 	"testing"
 	"zit/internal/config"
-	"zit/internal/git"
+	"zit/internal/gitutil"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -39,7 +39,7 @@ func TestFindBestMatch(t *testing.T) {
 			Default: &defaultUser,
 		}
 
-		repoInfo := git.RepoInfo{
+		repoInfo := gitutil.RepoInfo{
 			Host:  "github.com",
 			Owner: "johndoe",
 			Name:  "repo",
@@ -63,7 +63,7 @@ func TestFindBestMatch(t *testing.T) {
 			},
 		}
 
-		repoInfo := git.RepoInfo{
+		repoInfo := gitutil.RepoInfo{
 			Host:  "github.com",
 			Owner: "johndoe",
 			Name:  "repo",
@@ -87,7 +87,7 @@ func TestFindBestMatch(t *testing.T) {
 			},
 		}
 
-		repoInfo := git.RepoInfo{
+		repoInfo := gitutil.RepoInfo{
 			Host:  "github.com",
 			Owner: "corporation",
 			Name:  "repo",
@@ -112,7 +112,7 @@ func TestFindBestMatch(t *testing.T) {
 			},
 		}
 
-		repoInfo := git.RepoInfo{
+		repoInfo := gitutil.RepoInfo{
 			Host:  "github.com",
 			Owner: defaultUser.Name,
 			Name:  repoName,
@@ -136,7 +136,7 @@ func TestFindBestMatch(t *testing.T) {
 			},
 		}
 
-		repoInfo := git.RepoInfo{
+		repoInfo := gitutil.RepoInfo{
 			Host:  "gist.github.com",
 			Owner: "",
 			Name:  "gist",
@@ -170,7 +170,7 @@ func TestFindBestMatch(t *testing.T) {
 			},
 		}
 
-		repoInfo := git.RepoInfo{
+		repoInfo := gitutil.RepoInfo{
 			Host:  "github.com",
 			Owner: "2",
 			Name:  "2",

@@ -1,10 +1,11 @@
-package git
+package gitutil
 
 import (
 	"fmt"
 	"os"
 	"os/exec"
 	"regexp"
+	"zit/pkg/git"
 
 	giturls "github.com/mojotx/git-urls"
 )
@@ -19,7 +20,7 @@ func (e *ErrNoRemoteURL) Error() string {
 }
 
 // RemoteURL gets git remote URL by remote name.
-func RemoteURL(gitClient GitClient, name string) (string, error) {
+func RemoteURL(gitClient git.GitClient, name string) (string, error) {
 	out, err := gitClient.Exec("remote", "get-url", name)
 	if err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
@@ -34,7 +35,7 @@ func RemoteURL(gitClient GitClient, name string) (string, error) {
 }
 
 // SetConfig TODO
-func SetConfig(gitClient GitClient, scope, key, value string) error {
+func SetConfig(gitClient git.GitClient, scope, key, value string) error {
 	_, err := gitClient.Exec("config", scope, key, value)
 	if err != nil {
 		return err
@@ -43,7 +44,7 @@ func SetConfig(gitClient GitClient, scope, key, value string) error {
 }
 
 // GetConfig TODO
-func GetConfig(gitClient GitClient, scope, key string) (string, error) {
+func GetConfig(gitClient git.GitClient, scope, key string) (string, error) {
 	out, err := gitClient.Exec("config", scope, key)
 
 	if err != nil {
@@ -107,22 +108,13 @@ func ExtractRepoInfo(remoteURL string) (*RepoInfo, error) {
 	return &res, nil
 }
 
-// IsGitDir checks if dir is a git directory
-func IsGitDir(gitClient GitClient) (bool, error) {
-	out, err := gitClient.Exec("rev-parse", "--is-inside-work-tree")
-	if err != nil {
-		return false, err
-	}
-	return out == "true", nil
-}
-
-func EnsureGitDir(gitClient GitClient) error {
+func EnsureGitDir(gitClient git.GitClient) error {
 	dir, err := os.Getwd()
 	if err != nil {
 		return err
 	}
 
-	ok, err := IsGitDir(gitClient)
+	ok, err := git.IsGitDir(gitClient)
 	if err != nil {
 		return err
 	}

@@ -2,10 +2,10 @@ package identity
 
 import (
 	"zit/internal/config"
-	"zit/internal/git"
+	"zit/internal/gitutil"
 )
 
-func findBestMatch(conf config.HostConfig, repo git.RepoInfo) *config.User {
+func findBestMatch(conf config.HostConfig, repo gitutil.RepoInfo) *config.User {
 	var user *config.User
 
 	if conf.Default != nil {

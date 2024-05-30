@@ -3,7 +3,8 @@ package doctor
 import (
 	"fmt"
 	"strings"
-	"zit/internal/git"
+	"zit/internal/gitutil"
+	"zit/pkg/git"
 )
 
 type check struct {
@@ -18,7 +19,7 @@ func runChecks() error {
 	useConfigOnly := check{
 		Name: "git config --global user.useConfigOnly true",
 		CheckFunc: func() (bool, error) {
-			out, err := git.GetConfig(gitClient, "--global", "user.useConfigOnly")
+			out, err := gitutil.GetConfig(gitClient, "--global", "user.useConfigOnly")
 			if err != nil {
 				return false, err
 			}
@@ -29,7 +30,7 @@ func runChecks() error {
 	globalUserName := check{
 		Name: "git config --unset-all --global user.name",
 		CheckFunc: func() (bool, error) {
-			out, err := git.GetConfig(gitClient, "--global", "user.name")
+			out, err := gitutil.GetConfig(gitClient, "--global", "user.name")
 			if err != nil {
 				return false, err
 			}
@@ -40,7 +41,7 @@ func runChecks() error {
 	globalEmail := check{
 		Name: "git config --unset-all --global user.email",
 		CheckFunc: func() (bool, error) {
-			out, err := git.GetConfig(gitClient, "--global", "user.email")
+			out, err := gitutil.GetConfig(gitClient, "--global", "user.email")
 			if err != nil {
 				return false, err
 			}
@@ -51,7 +52,7 @@ func runChecks() error {
 	systemUserName := check{
 		Name: "git config --unset-all --system user.name",
 		CheckFunc: func() (bool, error) {
-			out, err := git.GetConfig(gitClient, "--system", "user.name")
+			out, err := gitutil.GetConfig(gitClient, "--system", "user.name")
 			if err != nil {
 				return false, err
 			}
@@ -62,7 +63,7 @@ func runChecks() error {
 	systemEmail := check{
 		Name: "git config --unset-all --system user.email",
 		CheckFunc: func() (bool, error) {
-			out, err := git.GetConfig(gitClient, "--system", "user.email")
+			out, err := gitutil.GetConfig(gitClient, "--system", "user.email")
 			if err != nil {
 				return false, err
 			}
