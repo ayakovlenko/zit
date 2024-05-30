@@ -1,6 +1,8 @@
-package git
+package gitutil
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestExtractHostNameFromRemote(t *testing.T) {
 	assertEquals := func(t *testing.T, want, have *RepoInfo) {

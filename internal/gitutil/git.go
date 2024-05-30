@@ -1,11 +1,11 @@
-package git
+package gitutil
 
 import (
 	"fmt"
 	"os"
 	"os/exec"
 	"regexp"
-	"strings"
+	"zit/pkg/git"
 
 	giturls "github.com/mojotx/git-urls"
 )
@@ -19,30 +19,9 @@ func (e *ErrNoRemoteURL) Error() string {
 	return fmt.Sprintf("remote %q is not set", e.name)
 }
 
-func git(args ...string) (string, error) {
-	theCmd := exec.Command("git", args...)
-
-	bout, err := theCmd.CombinedOutput()
-	sout := strings.TrimSpace(string(bout))
-
-	if err != nil {
-		if _, ok := err.(*exec.ExitError); ok {
-			return sout, err
-		}
-
-		return sout, fmt.Errorf(
-			"failed to execute %+v:\n%s",
-			theCmd,
-			sout,
-		)
-	}
-
-	return sout, nil
-}
-
 // RemoteURL gets git remote URL by remote name.
-func RemoteURL(name string) (string, error) {
-	out, err := git("remote", "get-url", name)
+func RemoteURL(gitClient git.GitClient, name string) (string, error) {
+	out, err := gitClient.Exec("remote", "get-url", name)
 	if err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
 			if exitError.ExitCode() == 128 {
@@ -56,8 +35,8 @@ func RemoteURL(name string) (string, error) {
 }
 
 // SetConfig TODO
-func SetConfig(scope, key, value string) error {
-	_, err := git("config", scope, key, value)
+func SetConfig(gitClient git.GitClient, scope, key, value string) error {
+	_, err := gitClient.Exec("config", scope, key, value)
 	if err != nil {
 		return err
 	}
@@ -65,8 +44,8 @@ func SetConfig(scope, key, value string) error {
 }
 
 // GetConfig TODO
-func GetConfig(scope, key string) (string, error) {
-	out, err := git("config", scope, key)
+func GetConfig(gitClient git.GitClient, scope, key string) (string, error) {
+	out, err := gitClient.Exec("config", scope, key)
 
 	if err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
@@ -129,28 +108,13 @@ func ExtractRepoInfo(remoteURL string) (*RepoInfo, error) {
 	return &res, nil
 }
 
-// IsGitDir checks if dir is a git directory
-func IsGitDir(dir string) (bool, error) {
-	if _, err := git("status"); err != nil {
-		if exitError, ok := err.(*exec.ExitError); ok {
-			if exitError.ExitCode() == 128 {
-				return false, nil
-			}
-		}
-
-		return false, err
-	}
-
-	return true, nil
-}
-
-func EnsureGitDir() error {
+func EnsureGitDir(gitClient git.GitClient) error {
 	dir, err := os.Getwd()
 	if err != nil {
 		return err
 	}
 
-	ok, err := IsGitDir(dir)
+	ok, err := git.IsGitDir(gitClient)
 	if err != nil {
 		return err
 	}
