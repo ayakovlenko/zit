@@ -89,8 +89,23 @@ defined in the configuration file:
 			if err := gitutil.SetConfig(gitClient, "--local", "user.name", cred.Name); err != nil {
 				return err
 			}
+
 			if err := gitutil.SetConfig(gitClient, "--local", "user.email", cred.Email); err != nil {
 				return err
+			}
+
+			if sign := cred.Signing; sign != nil {
+				if err := gitutil.SetConfig(gitClient, "--local", "commit.gpgsign", "true"); err != nil {
+					return err
+				}
+
+				if err := gitutil.SetConfig(gitClient, "--local", "user.signingKey", sign.Key); err != nil {
+					return err
+				}
+
+				if err := gitutil.SetConfig(gitClient, "--local", "gpg.format", sign.Format); err != nil {
+					return err
+				}
 			}
 		}
 

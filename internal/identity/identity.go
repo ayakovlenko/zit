@@ -9,10 +9,7 @@ func findBestMatch(conf config.HostConfig, repo gitutil.RepoInfo) *config.User {
 	var user *config.User
 
 	if conf.Default != nil {
-		user = &config.User{
-			Name:  conf.Default.Name,
-			Email: conf.Default.Email,
-		}
+		user = conf.Default
 	}
 
 	if conf.Overrides == nil {
@@ -22,18 +19,12 @@ func findBestMatch(conf config.HostConfig, repo gitutil.RepoInfo) *config.User {
 	for _, override := range conf.Overrides {
 		if override.Repo != "" {
 			if override.Owner == repo.Owner && override.Repo == repo.Name {
-				return &config.User{
-					Name:  override.User.Name,
-					Email: override.User.Email,
-				}
+				return &override.User
 			}
 		}
 
 		if override.Owner == repo.Owner {
-			return &config.User{
-				Name:  override.User.Name,
-				Email: override.User.Email,
-			}
+			return &override.User
 		}
 	}
 
