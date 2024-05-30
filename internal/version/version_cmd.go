@@ -7,11 +7,13 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-var VersionCmd = &cli.Command{
-	Name:  "version",
-	Usage: "Print version",
-	Action: func(_ *cli.Context) error {
-		fmt.Println(strings.TrimSpace(version))
-		return nil
-	},
+func VersionCmd(version string) *cli.Command {
+	return &cli.Command{
+		Name:  "version",
+		Usage: "Print version",
+		Action: func(_ *cli.Context) error {
+			fmt.Println(strings.TrimSpace(version))
+			return nil
+		},
+	}
 }

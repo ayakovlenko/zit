@@ -10,12 +10,14 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+const AppVersion = "v2.6.1"
+
 func main() {
 	app := &cli.App{
 		Name:  "zit",
 		Usage: "git identity manager",
 		Commands: []*cli.Command{
-			version.VersionCmd,
+			version.VersionCmd(AppVersion),
 			doctor.DoctorCmd,
 			identity.SetCmd,
 		},
