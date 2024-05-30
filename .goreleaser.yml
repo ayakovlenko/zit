@@ -1,13 +1,1 @@
 project_name: zit
-env:
-  - GO111MODULE=on
-before:
-  hooks:
-    - go mod download
-builds:
-  - main: ./cmd/zit
-    goos:
-      - darwin
-      - linux
-    goarch:
-      - amd64
