@@ -71,7 +71,7 @@ func runChecks() error {
 		},
 	}
 
-	var checks = []check{
+	checks := []check{
 		useConfigOnly,
 		globalUserName,
 		globalEmail,
