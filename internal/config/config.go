@@ -26,27 +26,27 @@ type HostMap map[string]HostConfig
 
 // HostConfig TODO
 type HostConfig struct {
-	Default   *User      `json:"default" yaml:"default"`
-	Overrides []Override `json:"overrides" yaml:"overrides"`
+	Default   *User      `yaml:"default"`
+	Overrides []Override `yaml:"overrides"`
 }
 
 // User TODO
 type User struct {
-	Name    string   `json:"name" yaml:"name"`
-	Email   string   `json:"email" yaml:"email"`
-	Signing *Signing `json:"sign" yaml:"sign"`
+	Name    string   `yaml:"name"`
+	Email   string   `yaml:"email"`
+	Signing *Signing `yaml:"sign"`
 }
 
 type Signing struct {
-	Key    string `json:"key" yaml:"key"`
-	Format string `json:"format" yaml:"format"`
+	Key    string `yaml:"key"`
+	Format string `yaml:"format"`
 }
 
 // Override TODO
 type Override struct {
-	Owner string `json:"owner" yaml:"owner"`
-	Repo  string `json:"repo,omitempty" yaml:"repo"`
-	User  User   `json:"user" yaml:"user"`
+	Owner string `yaml:"owner"`
+	Repo  string `yaml:"repo"`
+	User  User   `yaml:"user"`
 }
 
 type ConfigRoot struct {
