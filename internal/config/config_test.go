@@ -7,18 +7,6 @@ import (
 )
 
 func TestLocateConfig(t *testing.T) {
-	t.Run("get default Jsonnet config if it exists", func(t *testing.T) {
-		fs := afero.NewMemMapFs()
-		_, _ = fs.Create("/home/.zit/config.jsonnet")
-
-		have, _ := LocateConfFile(fs, "/home", "")
-		want := "/home/.zit/config.jsonnet"
-
-		if have != want {
-			t.Errorf("want: %s, have: %s", want, have)
-		}
-	})
-
 	t.Run("get default YAML config if it exists", func(t *testing.T) {
 		fs := afero.NewMemMapFs()
 		_, _ = fs.Create("/home/.zit/config.yaml")
@@ -50,23 +38,6 @@ func TestLoad(t *testing.T) {
 
 		if err != ErrUnsupportedConfigFormat {
 			t.Errorf("want: ErrUnsupportedConfigFormat; have: %+v", err)
-		}
-	})
-
-	t.Run("simple Jsonnet config", func(t *testing.T) {
-		config, _ := Load("test_data/config_01.jsonnet")
-
-		host, _ := config.Get("github.corp.com")
-
-		name := host.Default.Name
-		email := host.Default.Email
-
-		if name != "John Doe" {
-			t.Errorf("want: John Doe; have: %s", name)
-		}
-
-		if email != "john.doe@corp.com" {
-			t.Errorf("want: john.doe@corp.com; have: %s", email)
 		}
 	})
 

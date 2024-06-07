@@ -1,13 +1,11 @@
 package config
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path"
 	"strings"
 
-	"github.com/google/go-jsonnet"
 	"github.com/spf13/afero"
 	"gopkg.in/yaml.v2"
 )
@@ -35,8 +33,7 @@ func Load(filename string) (*ConfigRoot, error) {
 		}
 		return parseYaml(contents)
 	case jsonnetFormat:
-		fmt.Println("WARN: Jsonnet configs are deprecated and going to be unsupported in future versions. Migrate to YAML format.")
-		return parseJsonnet(filename)
+		return nil, fmt.Errorf("zit no longer supports Jsonnet configs since v3")
 	default:
 		return nil, fmt.Errorf("something went horribly wrong")
 	}
@@ -55,18 +52,13 @@ func formatFromFilename(filename string) string {
 func LocateConfFile(fs afero.Fs, userHomeDir, confPathFromEnv string) (string, error) {
 	var confPath string
 
-	jsonnetDefault := path.Join(userHomeDir, ".zit", "config.jsonnet")
 	yamlDefault := path.Join(userHomeDir, ".zit", "config.yaml")
 
 	// if ZIT_CONFIG is not set, try default location
 	envVarDefined := confPathFromEnv != ""
 
 	if !envVarDefined {
-		if fileExists(fs, jsonnetDefault) {
-			return jsonnetDefault, nil
-		} else {
-			return yamlDefault, nil
-		}
+		return yamlDefault, nil
 	}
 
 	if !fileExists(fs, confPathFromEnv) {
@@ -88,21 +80,6 @@ func fileExists(fs afero.Fs, filename string) bool {
 		return false
 	}
 	return true
-}
-
-func parseJsonnet(filename string) (*ConfigRoot, error) {
-	vm := jsonnet.MakeVM()
-	confJSON, err := vm.EvaluateFile(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	var Hosts HostMap
-	if err := json.Unmarshal([]byte(confJSON), &Hosts); err != nil {
-		return nil, err
-	}
-
-	return &ConfigRoot{Hosts}, nil
 }
 
 func parseYaml(contents []byte) (*ConfigRoot, error) {
