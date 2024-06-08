@@ -40,11 +40,11 @@ func setIdentity(
 	dryRun bool,
 ) error {
 	if !dryRun {
-		if err := gitutil.SetConfig(gitClient, "--local", "user.name", cred.Name); err != nil {
+		if err := git.SetLocalConfig(gitClient, "user.name", cred.Name); err != nil {
 			return err
 		}
 
-		if err := gitutil.SetConfig(gitClient, "--local", "user.email", cred.Email); err != nil {
+		if err := git.SetLocalConfig(gitClient, "user.email", cred.Email); err != nil {
 			return err
 		}
 	}
@@ -57,15 +57,15 @@ func setIdentity(
 	}
 
 	if !dryRun {
-		if err := gitutil.SetConfig(gitClient, "--local", "commit.gpgsign", "true"); err != nil {
+		if err := git.SetLocalConfig(gitClient, "commit.gpgsign", "true"); err != nil {
 			return err
 		}
 
-		if err := gitutil.SetConfig(gitClient, "--local", "user.signingKey", sign.Key); err != nil {
+		if err := git.SetLocalConfig(gitClient, "user.signingKey", sign.Key); err != nil {
 			return err
 		}
 
-		if err := gitutil.SetConfig(gitClient, "--local", "gpg.format", sign.Format); err != nil {
+		if err := git.SetLocalConfig(gitClient, "gpg.format", sign.Format); err != nil {
 			return err
 		}
 	}

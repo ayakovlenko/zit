@@ -34,15 +34,6 @@ func RemoteURL(gitClient git.GitClient, name string) (string, error) {
 	return out, nil
 }
 
-// SetConfig TODO
-func SetConfig(gitClient git.GitClient, scope, key, value string) error {
-	_, err := gitClient.Exec("config", scope, key, value)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // GetConfig TODO
 func GetConfig(gitClient git.GitClient, scope, key string) (string, error) {
 	out, err := gitClient.Exec("config", scope, key)
