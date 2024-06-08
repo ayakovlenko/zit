@@ -11,9 +11,8 @@ import (
 )
 
 const (
-	yamlFormat    = "yaml"
-	jsonnetFormat = "jsonnet"
-	otherFormat   = "other"
+	yamlFormat  = "yaml"
+	otherFormat = "other"
 )
 
 var ErrUnsupportedConfigFormat = fmt.Errorf("unsupported config format")
@@ -21,7 +20,7 @@ var ErrUnsupportedConfigFormat = fmt.Errorf("unsupported config format")
 func Load(filename string) (*ConfigRoot, error) {
 	format := formatFromFilename(filename)
 
-	if format != yamlFormat && format != jsonnetFormat {
+	if format != yamlFormat {
 		return nil, ErrUnsupportedConfigFormat
 	}
 
@@ -32,8 +31,6 @@ func Load(filename string) (*ConfigRoot, error) {
 			return nil, err
 		}
 		return parseYaml(contents)
-	case jsonnetFormat:
-		return nil, fmt.Errorf("zit no longer supports Jsonnet configs since v3")
 	default:
 		return nil, fmt.Errorf("something went horribly wrong")
 	}
@@ -42,8 +39,6 @@ func Load(filename string) (*ConfigRoot, error) {
 func formatFromFilename(filename string) string {
 	if strings.HasSuffix(filename, ".yaml") {
 		return yamlFormat
-	} else if strings.HasSuffix(filename, ".jsonnet") {
-		return jsonnetFormat
 	}
 	return otherFormat
 }
