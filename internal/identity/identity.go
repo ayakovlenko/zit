@@ -1,8 +1,10 @@
 package identity
 
 import (
+	"fmt"
 	"zit/internal/config"
 	"zit/internal/gitutil"
+	"zit/pkg/git"
 )
 
 func findBestMatch(conf config.HostConfig, repo gitutil.RepoInfo) *config.User {
@@ -29,4 +31,46 @@ func findBestMatch(conf config.HostConfig, repo gitutil.RepoInfo) *config.User {
 	}
 
 	return user
+}
+
+// setIdentity sets identity in a given repository based on a chosen identity.
+func setIdentity(
+	cred config.User,
+	gitClient git.GitClient,
+	dryRun bool,
+) error {
+	if !dryRun {
+		if err := gitutil.SetConfig(gitClient, "--local", "user.name", cred.Name); err != nil {
+			return err
+		}
+
+		if err := gitutil.SetConfig(gitClient, "--local", "user.email", cred.Email); err != nil {
+			return err
+		}
+	}
+
+	fmt.Printf("set user: %s <%s>\n", cred.Name, cred.Email)
+
+	sign := cred.Signing
+	if sign == nil {
+		return nil
+	}
+
+	if !dryRun {
+		if err := gitutil.SetConfig(gitClient, "--local", "commit.gpgsign", "true"); err != nil {
+			return err
+		}
+
+		if err := gitutil.SetConfig(gitClient, "--local", "user.signingKey", sign.Key); err != nil {
+			return err
+		}
+
+		if err := gitutil.SetConfig(gitClient, "--local", "gpg.format", sign.Format); err != nil {
+			return err
+		}
+	}
+
+	fmt.Printf("set signing key: %s key at %s\n", sign.Format, sign.Key)
+
+	return nil
 }
