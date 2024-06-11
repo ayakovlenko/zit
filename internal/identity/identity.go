@@ -61,6 +61,10 @@ func setIdentity(
 			return err
 		}
 
+		if err := git.SetLocalConfig(gitClient, "tag.gpgsign", "true"); err != nil {
+			return err
+		}
+
 		if err := git.SetLocalConfig(gitClient, "user.signingKey", sign.Key); err != nil {
 			return err
 		}
