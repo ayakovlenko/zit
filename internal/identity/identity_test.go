@@ -4,6 +4,7 @@ import (
 	"testing"
 	"zit/internal/config"
 	"zit/internal/gitutil"
+	"zit/pkg/git"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -180,5 +181,27 @@ func TestFindBestMatch(t *testing.T) {
 		have := findBestMatch(conf, repoInfo)
 
 		assert.Equal(t, want, have)
+	})
+}
+
+func TestSetIdentity(t *testing.T) {
+
+	t.Run("set credentials and signing key", func(t *testing.T) {
+		dryRun := false
+
+		gitClient := git.NewMockGitClient()
+
+		cred := config.User{
+			Name:  "John Doe",
+			Email: "john.doe@gmail.com",
+			Signing: &config.Signing{
+				Key:    "~/.ssh/key",
+				Format: "ssh",
+			},
+		}
+
+		err := setIdentity(gitClient, cred, dryRun)
+
+		assert.NoError(t, err)
 	})
 }

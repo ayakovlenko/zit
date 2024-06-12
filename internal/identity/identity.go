@@ -35,8 +35,8 @@ func findBestMatch(conf config.HostConfig, repo gitutil.RepoInfo) *config.User {
 
 // setIdentity sets identity in a given repository based on a chosen identity.
 func setIdentity(
-	cred config.User,
 	gitClient git.GitClient,
+	cred config.User,
 	dryRun bool,
 ) error {
 	if !dryRun {

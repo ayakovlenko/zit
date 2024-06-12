@@ -86,8 +86,8 @@ git remote add origin <url>
 		}
 
 		return setIdentity(
-			*cred,
 			gitClient,
+			*cred,
 			cCtx.Bool(dryRunFlag),
 		)
 	},
