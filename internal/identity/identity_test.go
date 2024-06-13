@@ -186,7 +186,36 @@ func TestFindBestMatch(t *testing.T) {
 
 func TestSetIdentity(t *testing.T) {
 
+	t.Run("set credentials", func(t *testing.T) {
+		// given
+		dryRun := false
+
+		gitClient := git.NewMockGitClient()
+
+		cred := config.User{
+			Name:  "John Doe",
+			Email: "john.doe@gmail.com",
+		}
+
+		gitClient.AddCommand(
+			[]string{"config", "--local", "user.name", "John Doe"}, "", nil,
+		)
+
+		gitClient.AddCommand(
+			[]string{"config", "--local", "user.email", "john.doe@gmail.com"}, "", nil,
+		)
+
+		// when
+
+		err := setIdentity(gitClient, cred, dryRun)
+
+		// then
+
+		assert.NoError(t, err)
+	})
+
 	t.Run("set credentials and signing key", func(t *testing.T) {
+		// given
 		dryRun := false
 
 		gitClient := git.NewMockGitClient()
@@ -200,7 +229,59 @@ func TestSetIdentity(t *testing.T) {
 			},
 		}
 
+		gitClient.AddCommand(
+			[]string{"config", "--local", "user.name", "John Doe"}, "", nil,
+		)
+
+		gitClient.AddCommand(
+			[]string{"config", "--local", "user.email", "john.doe@gmail.com"}, "", nil,
+		)
+
+		gitClient.AddCommand(
+			[]string{"config", "--local", "commit.gpgsign", "true"}, "", nil,
+		)
+
+		gitClient.AddCommand(
+			[]string{"config", "--local", "tag.gpgsign", "true"}, "", nil,
+		)
+
+		gitClient.AddCommand(
+			[]string{"config", "--local", "user.signingKey", "~/.ssh/key"}, "", nil,
+		)
+
+		gitClient.AddCommand(
+			[]string{"config", "--local", "gpg.format", "ssh"}, "", nil,
+		)
+
+		// when
+
 		err := setIdentity(gitClient, cred, dryRun)
+
+		// then
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("set credentials and signing key -- dry run", func(t *testing.T) {
+		// given
+		dryRun := true
+
+		gitClient := git.NewMockGitClient()
+
+		cred := config.User{
+			Name:  "John Doe",
+			Email: "john.doe@gmail.com",
+			Signing: &config.Signing{
+				Key:    "~/.ssh/key",
+				Format: "ssh",
+			},
+		}
+
+		// when
+
+		err := setIdentity(gitClient, cred, dryRun)
+
+		// then
 
 		assert.NoError(t, err)
 	})
