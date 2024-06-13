@@ -32,8 +32,14 @@ type HostConfig struct {
 
 // User TODO
 type User struct {
-	Name  string `yaml:"name"`
-	Email string `yaml:"email"`
+	Name    string   `yaml:"name"`
+	Email   string   `yaml:"email"`
+	Signing *Signing `yaml:"sign"`
+}
+
+type Signing struct {
+	Key    string `yaml:"key"`
+	Format string `yaml:"format"`
 }
 
 // Override TODO

@@ -25,23 +25,25 @@ var SetCmd = &cli.Command{
 		},
 	},
 	Action: func(cCtx *cli.Context) error {
-		gitClient := git.NewGitClient()
-
 		fs := afero.NewOsFs()
 
-		if err := gitutil.EnsureGitDir(gitClient); err != nil {
-			return err
-		}
+		gitClient := git.NewGitClient()
 
 		userHomeDir, err := os.UserHomeDir()
 		if err != nil {
+			return fmt.Errorf("cannot user home dir: %v", err)
+		}
+
+		configPathFromEnv := os.Getenv(config.EnvVarName)
+
+		if err := gitutil.EnsureGitDir(gitClient); err != nil {
 			return err
 		}
 
 		confPath, err := config.LocateConfFile(
 			fs,
 			userHomeDir,
-			os.Getenv(config.EnvVarName),
+			configPathFromEnv,
 		)
 		if err != nil {
 			return err
@@ -60,9 +62,9 @@ var SetCmd = &cli.Command{
 Add remote URL so that zit could use it for choosing the correct git identity as
 defined in the configuration file:
 
-    git remote add origin <url>
+git remote add origin <url>
 `, err)
-				os.Exit(1)
+				os.Exit(1) // TODO: return "FriendlyError" instead of os.Exit
 			} else {
 				return err
 			}
@@ -83,23 +85,10 @@ defined in the configuration file:
 			return fmt.Errorf("cannot find a match for host %q", repo.Host)
 		}
 
-		dryRun := cCtx.Bool(dryRunFlag)
-
-		if !dryRun {
-			if err := gitutil.SetConfig(gitClient, "--local", "user.name", cred.Name); err != nil {
-				return err
-			}
-			if err := gitutil.SetConfig(gitClient, "--local", "user.email", cred.Email); err != nil {
-				return err
-			}
-		}
-
-		if dryRun {
-			fmt.Printf("[dry-run] ")
-		}
-
-		fmt.Printf("set user: %s <%s>\n", cred.Name, cred.Email)
-
-		return nil
+		return setIdentity(
+			gitClient,
+			*cred,
+			cCtx.Bool(dryRunFlag),
+		)
 	},
 }
