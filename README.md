@@ -2,6 +2,23 @@
 
 _git identity manager_
 
+## Installation
+
+**On Mac/Linux with Homebrew**
+
+```bash
+brew tap ayakovlenko/tools
+brew install ayakovlenko/tools/zit
+```
+
+**From sources**
+
+```bash
+git clone https://github.com/ayakovlenko/zit.git
+cd zit
+go install
+```
+
 ## How it works
 
 _zit_ chooses a git identity based on:
@@ -71,28 +88,6 @@ git@github.corp.com:team/repo.git
 
 **Note**: Use `--dry-run` flag to test which identity will be used without
 applying it.
-
-## Installation
-
-**On Mac/Linux with Homebrew**
-
-```bash
-brew tap ayakovlenko/tools
-brew install ayakovlenko/tools/zit
-```
-
-**From sources**
-
-```bash
-git clone https://github.com/ayakovlenko/zit.git
-cd zit
-go install
-```
-
-**From binaries**
-
-Download binaries from the
-[releases](https://github.com/ayakovlenko/zit/releases) page.
 
 ## Setup
 
