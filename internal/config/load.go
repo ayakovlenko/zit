@@ -44,26 +44,41 @@ func formatFromFilename(filename string) string {
 }
 
 // LocateConfFile locates the path of the configuration file.
-func LocateConfFile(fs afero.Fs, userHomeDir, confPathFromEnv string) (string, error) {
-	var confPath string
-
-	yamlDefault := path.Join(userHomeDir, ".zit", "config.yaml")
-
-	// if ZIT_CONFIG is not set, try default location
-	envVarDefined := confPathFromEnv != ""
-
-	if !envVarDefined {
-		return yamlDefault, nil
-	}
-
-	if !fileExists(fs, confPathFromEnv) {
+func LocateConfFile(fs afero.Fs, userHomeDir, confPathFromEnv string, xdgHomeFromEnv string) (string, error) {
+	// try ZIT_CONFIG location
+	if confPathFromEnv != "" {
+		if fileExists(fs, confPathFromEnv) {
+			return confPathFromEnv, nil
+		}
 		return "", &ErrConfigNotFound{
-			EnvVar: envVarDefined,
-			Path:   confPath,
+			EnvVar: true,
+			Path:   "'" + confPathFromEnv + "'",
 		}
 	}
 
-	return confPathFromEnv, nil
+	// try default XDG-style locations:
+	// - $XDG_CONFIG_HOME/zit/config.yaml (if XDG_CONFIG_HOME is set)
+	// - $HOME/.config/zit/config.yaml
+	if xdgHomeFromEnv == "" {
+		xdgHomeFromEnv = path.Join(userHomeDir, ".config")
+	}
+	xdgYamlDefault := path.Join(xdgHomeFromEnv, "zit", "config.yaml")
+	if fileExists(fs, xdgYamlDefault) {
+		return xdgYamlDefault, nil
+	}
+
+	// try default dotfile location
+	// $HOME/.zit/config.yaml
+	yamlDefault := path.Join(userHomeDir, ".zit", "config.yaml")
+	if fileExists(fs, yamlDefault) {
+		return yamlDefault, nil
+	}
+
+	// we ran out of default options
+	return "", &ErrConfigNotFound{
+		EnvVar: false,
+		Path:   "neither " + xdgYamlDefault + " nor " + yamlDefault,
+	}
 }
 
 func fileExists(fs afero.Fs, filename string) bool {

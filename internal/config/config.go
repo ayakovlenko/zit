@@ -6,6 +6,7 @@ import (
 
 // EnvVarName TODO
 const EnvVarName = "ZIT_CONFIG"
+const XdgEnvVarName = "XDG_CONFIG_HOME"
 
 // ErrConfigNotFound TODO
 type ErrConfigNotFound struct {
@@ -18,7 +19,7 @@ func (err *ErrConfigNotFound) Error() string {
 	if err.EnvVar {
 		envVar = " defined in " + EnvVarName + " variable"
 	}
-	return fmt.Sprintf("config file%s is not found at %q", envVar, err.Path)
+	return fmt.Sprintf("config file%s is not found at %s", envVar, err.Path)
 }
 
 // HostMap TODO

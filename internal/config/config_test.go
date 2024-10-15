@@ -7,11 +7,41 @@ import (
 )
 
 func TestLocateConfig(t *testing.T) {
+	t.Run("get XDG-style YAML config from XDG_CONFIG_HOME if it exists", func(t *testing.T) {
+		fs := afero.NewMemMapFs()
+		_, _ = fs.Create("/some/custom/xdg/config/zit/config.yaml")
+		// should be ignored
+		_, _ = fs.Create("/home/.config/zit/config.yaml")
+		// should be ignored
+		_, _ = fs.Create("/home/.zit/config.yaml")
+
+		have, _ := LocateConfFile(fs, "/home", "", "/some/custom/xdg/config")
+		want := "/some/custom/xdg/config/zit/config.yaml"
+
+		if have != want {
+				t.Errorf("want: %s, have: %s", want, have)
+		}
+	})
+		
+	t.Run("get default XDG-style YAML config if it exists", func(t *testing.T) {
+		fs := afero.NewMemMapFs()
+		_, _ = fs.Create("/home/.config/zit/config.yaml")
+		// should be ignored
+		_, _ = fs.Create("/home/.zit/config.yaml")
+
+		have, _ := LocateConfFile(fs, "/home", "", "")
+		want := "/home/.config/zit/config.yaml"
+
+		if have != want {
+				t.Errorf("want: %s, have: %s", want, have)
+		}
+	})
+
 	t.Run("get default YAML config if it exists", func(t *testing.T) {
 		fs := afero.NewMemMapFs()
 		_, _ = fs.Create("/home/.zit/config.yaml")
 
-		have, _ := LocateConfFile(fs, "/home", "")
+		have, _ := LocateConfFile(fs, "/home", "", "")
 		want := "/home/.zit/config.yaml"
 
 		if have != want {
@@ -21,10 +51,14 @@ func TestLocateConfig(t *testing.T) {
 
 	t.Run("get YAML config if env var is defined", func(t *testing.T) {
 		fs := afero.NewMemMapFs()
+		_, _ = fs.Create("/some/custom/config/path/config.yaml")
+		// should be ignored
+		_, _ = fs.Create("/home/.config/zit/config.yaml")
+		// should be ignored
 		_, _ = fs.Create("/home/.zit/config.yaml")
 
-		have, _ := LocateConfFile(fs, "/home", "/home/.zit/config.yaml")
-		want := "/home/.zit/config.yaml"
+		have, _ := LocateConfFile(fs, "/home", "/some/custom/config/path/config.yaml", "")
+        want := "/some/custom/config/path/config.yaml"
 
 		if have != want {
 			t.Errorf("want: %s, have: %s", want, have)
