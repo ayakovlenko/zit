@@ -33,17 +33,19 @@ var SetCmd = &cli.Command{
 		if err != nil {
 			return fmt.Errorf("cannot user home dir: %v", err)
 		}
-
-		configPathFromEnv := os.Getenv(config.EnvVarName)
-
+		
 		if err := gitutil.EnsureGitDir(gitClient); err != nil {
 			return err
 		}
+
+		configPathFromEnv := os.Getenv(config.EnvVarName)
+		xdgHomePathFromEnv := os.Getenv(config.XdgEnvVarName)
 
 		confPath, err := config.LocateConfFile(
 			fs,
 			userHomeDir,
 			configPathFromEnv,
+			xdgHomePathFromEnv,
 		)
 		if err != nil {
 			return err
