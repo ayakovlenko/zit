@@ -13,14 +13,20 @@ _zit_ chooses a git identity based on:
 … as defined in the configuration file:
 
 ```yaml
+---
 users:
   work: &work_user
     name: "John Doe"
     email: "john.doe@corp.com"
+
   personal:
     github_user: &personal_github_user
       name: "JD42"
       email: "JD42@users.noreply.github.com"
+      sign:
+        key: "~/.ssh/id_ed25519_github.pub"
+        format: "ssh"
+
     gitlab_user: &personal_gitlab_user
       name: "JD42"
       email: "786972-JD42@users.noreply.gitlab.com"
@@ -39,16 +45,17 @@ hosts:
 
 There are 4 ways to set up a configuration file:
 
-1. Specify an environment variable that points to the config file: 
+1. Specify an environment variable that points to the config file:
    ```bash
    export ZIT_CONFIG=/custom-location/.zit-config.yaml
    ```
-   If the environment variable is set up, it will be chosen over the configs at the
-default locations.
-2. Place it in [XDG_CONFIG_HOME](https://specifications.freedesktop.org/basedir-spec/0.6/) location: `$XDG_CONFIG_HOME/.zit/config.yaml`
+   If the environment variable is set up, it will be chosen over the configs at
+   the default locations.
+2. Place it in
+   [XDG_CONFIG_HOME](https://specifications.freedesktop.org/basedir-spec/0.6/)
+   location: `$XDG_CONFIG_HOME/.zit/config.yaml`
 3. Place it in `.config` location: `$HOME/.config/zit/config.yaml`
 4. Place it at the default location: `$HOME/.zit/config.yaml`
-
 
 ## Usage
 
