@@ -5,6 +5,8 @@ import (
 	"os"
 	"path"
 	"strings"
+	"zit/internal/app"
+	"zit/pkg/xdg"
 
 	"github.com/spf13/afero"
 	"gopkg.in/yaml.v2"
@@ -30,6 +32,7 @@ func Load(filename string) (*ConfigRoot, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		return parseYaml(contents)
 	default:
 		return nil, fmt.Errorf("something went horribly wrong")
@@ -40,44 +43,54 @@ func formatFromFilename(filename string) string {
 	if strings.HasSuffix(filename, ".yaml") {
 		return yamlFormat
 	}
+
 	return otherFormat
 }
 
 // LocateConfFile locates the path of the configuration file.
-func LocateConfFile(fs afero.Fs, userHomeDir, confPathFromEnv string, xdgHomeFromEnv string) (string, error) {
+func LocateConfFile(appConfig app.Config) (string, error) {
+	fs := appConfig.FS()
+
+	userHomeDir := appConfig.UserHomeDir()
+
+	confPathFromEnv := appConfig.ConfigPathFromEnv()
+
+	xdgHomeFromEnv := appConfig.XDGHomePathFromEnv()
+
 	// try ZIT_CONFIG location
 	if confPathFromEnv != "" {
 		if fileExists(fs, confPathFromEnv) {
 			return confPathFromEnv, nil
 		}
-		return "", &ErrConfigNotFound{
+
+		return "", &ConfigNotFoundError{
 			EnvVar: true,
 			Path:   "'" + confPathFromEnv + "'",
 		}
 	}
 
-	// try default XDG-style locations:
-	// - $XDG_CONFIG_HOME/zit/config.yaml (if XDG_CONFIG_HOME is set)
-	// - $HOME/.config/zit/config.yaml
-	if xdgHomeFromEnv == "" {
-		xdgHomeFromEnv = path.Join(userHomeDir, ".config")
-	}
-	xdgYamlDefault := path.Join(xdgHomeFromEnv, "zit", "config.yaml")
-	if fileExists(fs, xdgYamlDefault) {
-		return xdgYamlDefault, nil
+	xdgConfigFile := xdg.LocateConfig(
+		appConfig.AppName(),
+		userHomeDir,
+		xdgHomeFromEnv,
+		appConfig.ConfigFilename(),
+	)
+
+	if fileExists(fs, xdgConfigFile) {
+		return xdgConfigFile, nil
 	}
 
 	// try default dotfile location
 	// $HOME/.zit/config.yaml
-	yamlDefault := path.Join(userHomeDir, ".zit", "config.yaml")
+	yamlDefault := path.Join(userHomeDir, "."+appConfig.AppName(), "config.yaml")
 	if fileExists(fs, yamlDefault) {
 		return yamlDefault, nil
 	}
 
 	// we ran out of default options
-	return "", &ErrConfigNotFound{
+	return "", &ConfigNotFoundError{
 		EnvVar: false,
-		Path:   "neither " + xdgYamlDefault + " nor " + yamlDefault,
+		Path:   "neither " + xdgConfigFile + " nor " + yamlDefault,
 	}
 }
 
@@ -86,9 +99,11 @@ func fileExists(fs afero.Fs, filename string) bool {
 	if os.IsNotExist(err) {
 		return false
 	}
+
 	if fileInfo.IsDir() {
 		return false
 	}
+
 	return true
 }
 
@@ -97,5 +112,6 @@ func parseYaml(contents []byte) (*ConfigRoot, error) {
 	if err := yaml.Unmarshal(contents, &config); err != nil {
 		return nil, err
 	}
+
 	return &config, nil
 }

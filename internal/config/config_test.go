@@ -2,72 +2,143 @@ package config
 
 import (
 	"testing"
+	"zit/internal/app"
 
 	"github.com/spf13/afero"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLocateConfig(t *testing.T) {
-	t.Run("get XDG-style YAML config from XDG_CONFIG_HOME if it exists", func(t *testing.T) {
-		fs := afero.NewMemMapFs()
-		_, _ = fs.Create("/some/custom/xdg/config/zit/config.yaml")
-		// should be ignored
-		_, _ = fs.Create("/home/.config/zit/config.yaml")
-		// should be ignored
-		_, _ = fs.Create("/home/.zit/config.yaml")
+	t.Parallel()
 
-		have, _ := LocateConfFile(fs, "/home", "", "/some/custom/xdg/config")
+	t.Run("get XDG-style YAML config from XDG_CONFIG_HOME if it exists", func(t *testing.T) {
+		t.Parallel()
+
+		var err error
+
+		appConfig := app.NewConfig(
+			afero.NewMemMapFs(),
+			"/home",
+			"",
+			"/some/custom/xdg/config",
+		)
+
+		fs := appConfig.FS()
+
+		_, err = fs.Create("/some/custom/xdg/config/zit/config.yaml")
+		require.NoError(t, err)
+
+		// should be ignored
+		_, err = fs.Create("/home/.config/zit/config.yaml")
+		require.NoError(t, err)
+
+		// should be ignored
+		_, err = fs.Create("/home/.zit/config.yaml")
+		require.NoError(t, err)
+
+		have, err := LocateConfFile(appConfig)
+		require.NoError(t, err)
+
 		want := "/some/custom/xdg/config/zit/config.yaml"
 
-		if have != want {
-				t.Errorf("want: %s, have: %s", want, have)
-		}
+		assert.Equal(t, want, have)
 	})
-		
-	t.Run("get default XDG-style YAML config if it exists", func(t *testing.T) {
-		fs := afero.NewMemMapFs()
-		_, _ = fs.Create("/home/.config/zit/config.yaml")
-		// should be ignored
-		_, _ = fs.Create("/home/.zit/config.yaml")
 
-		have, _ := LocateConfFile(fs, "/home", "", "")
+	t.Run("get default XDG-style YAML config if it exists", func(t *testing.T) {
+		t.Parallel()
+
+		var err error
+
+		appConfig := app.NewConfig(
+			afero.NewMemMapFs(),
+			"/home",
+			"",
+			"",
+		)
+
+		fs := appConfig.FS()
+
+		_, err = fs.Create("/home/.config/zit/config.yaml")
+		require.NoError(t, err)
+
+		// should be ignored
+		_, err = fs.Create("/home/.zit/config.yaml")
+		require.NoError(t, err)
+
+		have, err := LocateConfFile(appConfig)
+		require.NoError(t, err)
+
 		want := "/home/.config/zit/config.yaml"
 
-		if have != want {
-				t.Errorf("want: %s, have: %s", want, have)
-		}
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("get default YAML config if it exists", func(t *testing.T) {
-		fs := afero.NewMemMapFs()
-		_, _ = fs.Create("/home/.zit/config.yaml")
+		t.Parallel()
 
-		have, _ := LocateConfFile(fs, "/home", "", "")
+		var err error
+
+		appConfig := app.NewConfig(
+			afero.NewMemMapFs(),
+			"/home",
+			"",
+			"",
+		)
+
+		fs := appConfig.FS()
+
+		_, err = fs.Create("/home/.zit/config.yaml")
+		require.NoError(t, err)
+
+		have, err := LocateConfFile(appConfig)
+		require.NoError(t, err)
+
 		want := "/home/.zit/config.yaml"
 
-		if have != want {
-			t.Errorf("want: %s, have: %s", want, have)
-		}
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("get YAML config if env var is defined", func(t *testing.T) {
-		fs := afero.NewMemMapFs()
-		_, _ = fs.Create("/some/custom/config/path/config.yaml")
-		// should be ignored
-		_, _ = fs.Create("/home/.config/zit/config.yaml")
-		// should be ignored
-		_, _ = fs.Create("/home/.zit/config.yaml")
+		t.Parallel()
 
-		have, _ := LocateConfFile(fs, "/home", "/some/custom/config/path/config.yaml", "")
-        want := "/some/custom/config/path/config.yaml"
+		var err error
 
-		if have != want {
-			t.Errorf("want: %s, have: %s", want, have)
-		}
+		appConfig := app.NewConfig(
+			afero.NewMemMapFs(),
+			"/home",
+			"/some/custom/config/path/config.yaml",
+			"",
+		)
+
+		fs := appConfig.FS()
+
+		_, err = fs.Create("/some/custom/config/path/config.yaml")
+		require.NoError(t, err)
+
+		// should be ignored
+		_, err = fs.Create("/home/.config/zit/config.yaml")
+		require.NoError(t, err)
+
+		// should be ignored
+		_, err = fs.Create("/home/.zit/config.yaml")
+		require.NoError(t, err)
+
+		have, err := LocateConfFile(appConfig)
+		require.NoError(t, err)
+
+		want := "/some/custom/config/path/config.yaml"
+
+		assert.Equal(t, want, have)
 	})
 }
 
 func TestLoad(t *testing.T) {
+	t.Parallel()
+
 	t.Run("unsupported config", func(t *testing.T) {
+		t.Parallel()
+
 		_, err := Load("test_data/config_00.txt")
 
 		if err != ErrUnsupportedConfigFormat {
@@ -76,6 +147,8 @@ func TestLoad(t *testing.T) {
 	})
 
 	t.Run("simple YAML config", func(t *testing.T) {
+		t.Parallel()
+
 		config, _ := Load("test_data/config_01.yaml")
 
 		host, _ := config.Get("github.corp.com")
