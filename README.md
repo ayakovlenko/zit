@@ -43,19 +43,12 @@ hosts:
 
 ## Setup
 
-There are 4 ways to set up a configuration file:
+There are 2 ways to set up a configuration file:
 
-1. Specify an environment variable that points to the config file:
-   ```bash
-   export ZIT_CONFIG=/custom-location/.zit-config.yaml
-   ```
-   If the environment variable is set up, it will be chosen over the configs at
-   the default locations.
-2. Place it in
+1. Place it in
    [XDG_CONFIG_HOME](https://specifications.freedesktop.org/basedir-spec/0.6/)
-   location: `$XDG_CONFIG_HOME/.zit/config.yaml`
-3. Place it in `.config` location: `$HOME/.config/zit/config.yaml`
-4. Place it at the default location: `$HOME/.zit/config.yaml`
+   location: `$XDG_CONFIG_HOME/zit/config.yaml`
+2. Place it in `.config` location: `$HOME/.config/zit/config.yaml`
 
 ## Usage
 

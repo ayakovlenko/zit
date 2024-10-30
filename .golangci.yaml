@@ -1,0 +1,15 @@
+---
+linters:
+  disable-all: false
+  enable-all: true
+  disable:
+    - exportloopref # deprecated
+    - gomnd # deprecated
+    - execinquery # deprecated
+    - depguard
+    - gci
+
+linters-settings:
+  varnamelen:
+    ignore-names:
+      - fs
