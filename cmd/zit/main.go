@@ -17,7 +17,7 @@ import (
 func main() {
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
-		fmt.Println(err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
@@ -28,7 +28,7 @@ func main() {
 		os.Getenv(xdg.ConfigHome),
 	)
 
-	app := &cli.App{
+	app := &cli.App{ //nolint: exhaustruct
 		Name:  appConfig.AppName(),
 		Usage: "git identity manager",
 		Commands: []*cli.Command{
@@ -40,7 +40,7 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		fmt.Println(err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
