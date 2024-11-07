@@ -43,19 +43,20 @@ hosts:
 
 ## Setup
 
-There are 4 ways to set up a configuration file:
+There are 2 ways to set up a configuration file:
 
-1. Specify an environment variable that points to the config file:
-   ```bash
-   export ZIT_CONFIG=/custom-location/.zit-config.yaml
-   ```
-   If the environment variable is set up, it will be chosen over the configs at
-   the default locations.
-2. Place it in
+1. Place it in
    [XDG_CONFIG_HOME](https://specifications.freedesktop.org/basedir-spec/0.6/)
-   location: `$XDG_CONFIG_HOME/.zit/config.yaml`
-3. Place it in `.config` location: `$HOME/.config/zit/config.yaml`
-4. Place it at the default location: `$HOME/.zit/config.yaml`
+   location: `$XDG_CONFIG_HOME/zit/config.yaml`
+2. Place it in `.config` location: `$HOME/.config/zit/config.yaml`
+
+Alternatively, run:
+
+```sh
+zit config init
+
+vim $(zit config path)
+```
 
 ## Usage
 
@@ -64,6 +65,7 @@ To set up an identity, run `zit set` inside a repo directory:
 ```bash
 $ zit set  # personal repo
 set user: jdoe <jdoe@users.noreply.github.com>
+set signing key: ssh key at ~/.ssh/id_ed25519_github.pub
 
 $ git remote get-url origin
 https://github.com/jdoe/repo.git
