@@ -14,7 +14,7 @@ type Config interface {
 
 const (
 	appName        = "zit"
-	appVersion     = "v3.1.0-alpha.2"
+	appVersion     = "v3.1.0"
 	configFilename = "config.yaml"
 )
 
