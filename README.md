@@ -13,6 +13,7 @@ _zit_ chooses a git identity based on:
 … as defined in the configuration file:
 
 ```yaml
+# Example config
 ---
 users:
   work: &work_user
@@ -37,6 +38,7 @@ hosts:
     overrides:
       - owner: "corp"
         user: *work_user
+
   gitlab.com:
     default: *personal_gitlab_user
 ```
@@ -135,3 +137,10 @@ $ zit doctor
 - [x] git config --unset-all --system user.name
 - [x] git config --unset-all --system user.email
 ```
+
+## Contributors
+
+- @arjunrn
+- @etolmach
+
+[![Star History Chart](https://api.star-history.com/svg?repos=ayakovlenko/zit&type=Date)](https://star-history.com/#ayakovlenko/zit&Date)
