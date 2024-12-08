@@ -138,9 +138,17 @@ $ zit doctor
 - [x] git config --unset-all --system user.email
 ```
 
-## Contributors
+## Contributing
 
-- @arjunrn
-- @etolmach
+If you feel you can contribute to this project, or you've found a bug, create an issue or pull request.
 
-[![Star History Chart](https://api.star-history.com/svg?repos=ayakovlenko/zit&type=Date)](https://star-history.com/#ayakovlenko/zit&Date)
+This project is soley mantained, so it is prone to bugs and anti-patterns, please call them out.
+
+All contributions are highly appreciated!
+
+[![](https://api.star-history.com/svg?repos=ayakovlenko/zit&type=Date)](https://star-history.com/#ayakovlenko/zit&Date)
+
+### Contributors
+
+- [@arjunrn](https://github.com/arjunrn)
+- [@etolmach](https://github.com/etolmach)
