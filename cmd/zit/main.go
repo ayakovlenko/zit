@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"zit/internal/app"
@@ -11,7 +12,7 @@ import (
 	"zit/pkg/xdg"
 
 	"github.com/spf13/afero"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func main() {
@@ -28,7 +29,7 @@ func main() {
 		os.Getenv(xdg.ConfigHome),
 	)
 
-	app := &cli.App{ //nolint: exhaustruct
+	app := &cli.Command{ //nolint: exhaustruct
 		Name:  appConfig.AppName(),
 		Usage: "git identity manager",
 		Commands: []*cli.Command{
@@ -39,7 +40,7 @@ func main() {
 		},
 	}
 
-	if err := app.Run(os.Args); err != nil {
+	if err := app.Run(context.Background(), os.Args); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

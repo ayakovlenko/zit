@@ -1,13 +1,14 @@
 package config
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"zit/internal/app"
 	"zit/pkg/xdg"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 const sampleConfig = `---
@@ -44,7 +45,7 @@ func ConfigCmd(appConfig app.Config) *cli.Command {
 	return &cli.Command{
 		Name:  "config",
 		Usage: "Configuration management",
-		Subcommands: []*cli.Command{
+		Commands: []*cli.Command{
 			configInitCmd(appConfig),
 			configPathCmd(appConfig),
 			configShowCmd(appConfig),
@@ -56,7 +57,7 @@ func configInitCmd(appConfig app.Config) *cli.Command {
 	return &cli.Command{
 		Name:  "init",
 		Usage: "Initialize configuration file",
-		Action: func(_ *cli.Context) error {
+		Action: func(_ context.Context, _ *cli.Command) error {
 			confPath := xdg.LocateConfig(
 				appConfig.AppName(),
 				appConfig.UserHomeDir(),
@@ -88,7 +89,7 @@ func configPathCmd(appConfig app.Config) *cli.Command {
 	return &cli.Command{
 		Name:  "path",
 		Usage: "Show path to configuration file",
-		Action: func(_ *cli.Context) error {
+		Action: func(_ context.Context, _ *cli.Command) error {
 			confPath, err := LocateConfFile(appConfig)
 
 			if err != nil {
@@ -112,7 +113,7 @@ func configShowCmd(appConfig app.Config) *cli.Command {
 	return &cli.Command{
 		Name:  "show",
 		Usage: "Show configuration file contents",
-		Action: func(_ *cli.Context) error {
+		Action: func(_ context.Context, _ *cli.Command) error {
 			confPath, err := LocateConfFile(appConfig)
 
 			if err != nil {
