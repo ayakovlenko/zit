@@ -1,6 +1,7 @@
 package identity
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"zit/internal/app"
@@ -8,7 +9,7 @@ import (
 	"zit/internal/gitutil"
 	"zit/pkg/git"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 const dryRunFlag = "dry-run"
@@ -25,7 +26,7 @@ func SetCmd(appConfig app.Config) *cli.Command {
 				Usage: "run without applying configurations",
 			},
 		},
-		Action: func(cCtx *cli.Context) error {
+		Action: func(_ context.Context, cmd *cli.Command) error {
 			gitClient := git.NewGitClient()
 
 			if err := gitutil.EnsureGitDir(gitClient); err != nil {
@@ -76,7 +77,7 @@ git remote add origin <url>
 			return setIdentity(
 				gitClient,
 				*cred,
-				cCtx.Bool(dryRunFlag),
+				cmd.Bool(dryRunFlag),
 			)
 		},
 	}
