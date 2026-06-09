@@ -3,7 +3,6 @@ package gitutil
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"regexp"
 	"zit/pkg/git"
 
@@ -19,13 +18,24 @@ func (e *ErrNoRemoteURL) Error() string {
 	return fmt.Sprintf("remote %q is not set", e.name)
 }
 
+// exitCoder matches exec.ExitError and our mock
+type exitCoder interface {
+	ExitCode() int
+}
+
 // RemoteURL gets git remote URL by remote name.
 func RemoteURL(gitClient git.GitClient, name string) (string, error) {
 	out, err := gitClient.Exec("remote", "get-url", name)
 	if err != nil {
-		if exitError, ok := err.(*exec.ExitError); ok {
-			if exitError.ExitCode() == 128 {
+		if exitError, ok := err.(exitCoder); ok {
+			// Exit code 2: remote name is invalid or not set
+			if exitError.ExitCode() == 2 {
 				return "", &ErrNoRemoteURL{name}
+			}
+
+			// Exit code 128: not a git repository or other fatal git errors
+			if exitError.ExitCode() == 128 {
+				return "", fmt.Errorf("%s", out)
 			}
 		}
 		return out, err
@@ -39,7 +49,7 @@ func GetConfig(gitClient git.GitClient, scope, key string) (string, error) {
 	out, err := gitClient.Exec("config", scope, key)
 
 	if err != nil {
-		if exitError, ok := err.(*exec.ExitError); ok {
+		if exitError, ok := err.(exitCoder); ok {
 			if exitError.ExitCode() == 1 {
 				return "", nil
 			}
@@ -119,6 +129,10 @@ If you are, perhaps you have forgotten to initialize a new repository? In this
 case, run:
 
     git init
+
+Or, if you have an existing repository but haven't set up the remote URL:
+
+    git remote add origin <url>
 `, dir)
 		os.Exit(1)
 	}

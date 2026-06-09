@@ -1,7 +1,10 @@
 package gitutil
 
 import (
+	"errors"
 	"testing"
+
+	"zit/pkg/git"
 )
 
 func TestExtractHostNameFromRemote(t *testing.T) {
@@ -106,5 +109,61 @@ func TestExtractHostNameFromRemote(t *testing.T) {
 
 			assertEquals(t, have, want)
 		})
+	})
+}
+
+func TestRemoteURL(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		gitClient := git.NewMockGitClient()
+		gitClient.AddCommand(
+			[]string{"remote", "get-url", "origin"},
+			"git@github.com:user/repo.git",
+			nil,
+		)
+
+		url, err := RemoteURL(gitClient, "origin")
+
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		if url != "git@github.com:user/repo.git" {
+			t.Errorf("want: git@github.com:user/repo.git; have: %s", url)
+		}
+	})
+
+	t.Run("exit code 2: remote not set", func(t *testing.T) {
+		gitClient := git.NewMockGitClient()
+		gitClient.AddExitError(
+			[]string{"remote", "get-url", "origin"},
+			"error: No such remote 'origin'",
+			2,
+		)
+
+		_, err := RemoteURL(gitClient, "origin")
+
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !errors.Is(err, &ErrNoRemoteURL{"origin"}) && err.Error() != `remote "origin" is not set` {
+			t.Errorf("expected ErrNoRemoteURL, got: %v", err)
+		}
+	})
+
+	t.Run("exit code 128: return underlying error", func(t *testing.T) {
+		gitClient := git.NewMockGitClient()
+		gitClient.AddExitError(
+			[]string{"remote", "get-url", "origin"},
+			"fatal: not a git repository",
+			128,
+		)
+
+		_, err := RemoteURL(gitClient, "origin")
+
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if err.Error() != "fatal: not a git repository" {
+			t.Errorf("expected git error message, got: %v", err)
+		}
 	})
 }
