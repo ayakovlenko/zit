@@ -149,6 +149,30 @@ func TestFindBestMatch(t *testing.T) {
 		assert.Equal(t, want, have)
 	})
 
+	t.Run("repo-specific override must not match other repos in same org", func(t *testing.T) {
+		conf := config.HostConfig{
+			Default: &defaultUser,
+			Overrides: []config.Override{
+				{
+					Owner: "corp",
+					Repo:  "special",
+					User:  corpUser1,
+				},
+			},
+		}
+
+		repoInfo := gitutil.RepoInfo{
+			Host:  "github.com",
+			Owner: "corp",
+			Name:  "other",
+		}
+
+		want := &defaultUser
+		have := findBestMatch(conf, repoInfo)
+
+		assert.Equal(t, want, have)
+	})
+
 	t.Run("match repo and owner override", func(t *testing.T) {
 		conf := config.HostConfig{
 			Default: &defaultUser,
