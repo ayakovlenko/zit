@@ -43,6 +43,7 @@ type ExistingFile struct {
 
 type Expect struct {
 	Stdout             string        `yaml:"stdout"`
+	StdoutContainsAll  []string      `yaml:"stdout_contains_all"`
 	Stderr             string        `yaml:"stderr"`
 	StderrContains     string        `yaml:"stderr_contains"`
 	Exit               int           `yaml:"exit"`
@@ -241,8 +242,13 @@ func runTest(tc TestCase, binaryTokens []string) []string {
 	}
 	if wantStdout != "" && gotStdout != wantStdout {
 		fail("stdout mismatch:\n  want: %q\n  got:  %q", wantStdout, gotStdout)
-	} else if wantStdout == "" && tc.Expect.Stdout == "" && gotStdout != "" {
+	} else if wantStdout == "" && tc.Expect.Stdout == "" && len(tc.Expect.StdoutContainsAll) == 0 && gotStdout != "" {
 		fail("stdout mismatch:\n  want: (empty)\n  got:  %q", gotStdout)
+	}
+	for _, s := range tc.Expect.StdoutContainsAll {
+		if !strings.Contains(gotStdout, s) {
+			fail("stdout does not contain %q:\n  got: %q", s, gotStdout)
+		}
 	}
 	if wantStderrContains != "" {
 		if !strings.Contains(gotStderr, wantStderrContains) {

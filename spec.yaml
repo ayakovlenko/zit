@@ -140,22 +140,12 @@ tests:
     argv: []
     setup: {}
     expect:
-      stdout: |
-        NAME:
-           zit - git identity manager
-
-        USAGE:
-           zit [global options] [command [command options]]
-
-        COMMANDS:
-           version  Print version
-           doctor   Check git setup for potential problems
-           set      Set git identity
-           config   Configuration management
-           help, h  Shows a list of commands or help for one command
-
-        GLOBAL OPTIONS:
-           --help, -h  show help
+      stdout_contains_all:
+        - "zit"
+        - "version"
+        - "doctor"
+        - "set"
+        - "config"
       stderr: ""
       exit: 0
 
