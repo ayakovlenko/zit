@@ -11,7 +11,6 @@ import (
 	"zit/internal/version"
 	"zit/pkg/xdg"
 
-	"github.com/spf13/afero"
 	"github.com/urfave/cli/v3"
 )
 
@@ -23,7 +22,7 @@ func main() {
 	}
 
 	appConfig := app.NewConfig(
-		afero.NewOsFs(),
+		app.OsFS{},
 		userHomeDir,
 		os.Getenv(config.EnvVarName),
 		os.Getenv(xdg.ConfigHome),

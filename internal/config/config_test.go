@@ -4,7 +4,6 @@ import (
 	"testing"
 	"zit/internal/app"
 
-	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -18,7 +17,7 @@ func TestLocateConfig(t *testing.T) {
 		var err error
 
 		appConfig := app.NewConfig(
-			afero.NewMemMapFs(),
+			newMapFS(),
 			"/home",
 			"",
 			"/some/custom/xdg/config",
@@ -51,7 +50,7 @@ func TestLocateConfig(t *testing.T) {
 		var err error
 
 		appConfig := app.NewConfig(
-			afero.NewMemMapFs(),
+			newMapFS(),
 			"/home",
 			"",
 			"",
@@ -80,7 +79,7 @@ func TestLocateConfig(t *testing.T) {
 		var err error
 
 		appConfig := app.NewConfig(
-			afero.NewMemMapFs(),
+			newMapFS(),
 			"/home",
 			"",
 			"",
@@ -105,7 +104,7 @@ func TestLocateConfig(t *testing.T) {
 		var err error
 
 		appConfig := app.NewConfig(
-			afero.NewMemMapFs(),
+			newMapFS(),
 			"/home",
 			"/some/custom/config/path/config.yaml",
 			"",
