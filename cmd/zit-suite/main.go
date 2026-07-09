@@ -2,12 +2,10 @@ package main
 
 import (
 	"bytes"
-	"flag"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -72,28 +70,13 @@ const (
 )
 
 func main() {
-	specPath := flag.String("spec", "spec.yaml", "path to spec.yaml")
-	runFilter := flag.String("run", "", "regex filter on test ID")
-	verbose := flag.Bool("v", false, "print output of passing tests")
-	flag.Parse()
-
-	if flag.NArg() != 1 {
-		fmt.Fprintln(os.Stderr, "usage: zit-suite [--spec <path>] [--run <regex>] [-v] <image>")
+	if len(os.Args) != 2 {
+		fmt.Fprintln(os.Stderr, "usage: zit-suite <image>")
 		os.Exit(2)
 	}
-	image := flag.Arg(0)
+	image := os.Args[1]
 
-	var filter *regexp.Regexp
-	if *runFilter != "" {
-		var err error
-		filter, err = regexp.Compile(*runFilter)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "invalid --run regex: %v\n", err)
-			os.Exit(2)
-		}
-	}
-
-	data, err := os.ReadFile(*specPath)
+	data, err := os.ReadFile("spec.yaml")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error reading spec: %v\n", err)
 		os.Exit(2)
@@ -107,15 +90,9 @@ func main() {
 
 	passed, failed := 0, 0
 	for _, tc := range spec.Tests {
-		if filter != nil && !filter.MatchString(tc.ID) {
-			continue
-		}
 		failures := runTest(tc, image)
 		if len(failures) == 0 {
 			passed++
-			if *verbose {
-				fmt.Printf("--- PASS: %s\n", tc.ID)
-			}
 		} else {
 			failed++
 			fmt.Printf("--- FAIL: %s\n", tc.ID)
