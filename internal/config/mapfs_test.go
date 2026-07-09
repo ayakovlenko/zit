@@ -7,11 +7,11 @@ import (
 )
 
 type mapFS struct {
-	files map[string]struct{}
+	files map[string][]byte
 }
 
 func newMapFS() *mapFS {
-	return &mapFS{files: make(map[string]struct{})}
+	return &mapFS{files: make(map[string][]byte)}
 }
 
 func (m *mapFS) Stat(name string) (fs.FileInfo, error) {
@@ -23,9 +23,28 @@ func (m *mapFS) Stat(name string) (fs.FileInfo, error) {
 }
 
 func (m *mapFS) Create(name string) (*os.File, error) {
-	m.files[name] = struct{}{}
+	m.files[name] = nil
 
 	return nil, nil
+}
+
+func (m *mapFS) MkdirAll(path string, _ fs.FileMode) error {
+	m.files[path] = nil
+
+	return nil
+}
+
+func (m *mapFS) ReadFile(name string) ([]byte, error) {
+	content, ok := m.files[name]
+	if !ok {
+		return nil, &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
+	}
+
+	return content, nil
+}
+
+func (m *mapFS) writeFile(name string, content []byte) {
+	m.files[name] = content
 }
 
 type mapFileInfo struct {

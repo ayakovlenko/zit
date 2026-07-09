@@ -65,7 +65,7 @@ func configInitCmd(appConfig app.Config) *cli.Command {
 				appConfig.ConfigFilename(),
 			)
 
-			err := os.MkdirAll(filepath.Dir(confPath), 0755)
+			err := appConfig.FS().MkdirAll(filepath.Dir(confPath), 0755)
 			if err != nil {
 				return err
 			}
@@ -126,7 +126,7 @@ func configShowCmd(appConfig app.Config) *cli.Command {
 				return err
 			}
 
-			bs, err := os.ReadFile(confPath)
+			bs, err := appConfig.FS().ReadFile(confPath)
 			if err != nil {
 				return err
 			}

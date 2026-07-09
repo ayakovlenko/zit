@@ -9,6 +9,8 @@ import (
 type FS interface {
 	Stat(name string) (fs.FileInfo, error)
 	Create(name string) (*os.File, error)
+	MkdirAll(path string, perm os.FileMode) error
+	ReadFile(name string) ([]byte, error)
 }
 
 // OsFS is an FS backed by the real operating system.
@@ -20,6 +22,14 @@ func (OsFS) Stat(name string) (fs.FileInfo, error) {
 
 func (OsFS) Create(name string) (*os.File, error) {
 	return os.Create(name)
+}
+
+func (OsFS) MkdirAll(path string, perm os.FileMode) error {
+	return os.MkdirAll(path, perm)
+}
+
+func (OsFS) ReadFile(name string) ([]byte, error) {
+	return os.ReadFile(name)
 }
 
 type Config interface {

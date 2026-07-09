@@ -98,6 +98,32 @@ func TestLocateConfig(t *testing.T) {
 		assert.Equal(t, want, have)
 	})
 
+	t.Run("return error when env var path does not exist", func(t *testing.T) {
+		t.Parallel()
+
+		appConfig := app.NewConfig(newMapFS(), "/home", "/missing/config.yaml", "")
+
+		_, err := LocateConfFile(appConfig)
+		require.Error(t, err)
+
+		var notFound *ConfigNotFoundError
+		require.ErrorAs(t, err, &notFound)
+		assert.True(t, notFound.EnvVar)
+	})
+
+	t.Run("return error when no config file exists anywhere", func(t *testing.T) {
+		t.Parallel()
+
+		appConfig := app.NewConfig(newMapFS(), "/home", "", "")
+
+		_, err := LocateConfFile(appConfig)
+		require.Error(t, err)
+
+		var notFound *ConfigNotFoundError
+		require.ErrorAs(t, err, &notFound)
+		assert.False(t, notFound.EnvVar)
+	})
+
 	t.Run("get YAML config if env var is defined", func(t *testing.T) {
 		t.Parallel()
 
@@ -138,17 +164,47 @@ func TestLoad(t *testing.T) {
 	t.Run("unsupported config", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := Load("test_data/config_00.txt")
+		_, err := Load(app.OsFS{}, "test_data/config_00.txt")
 
 		if err != ErrUnsupportedConfigFormat {
 			t.Errorf("want: ErrUnsupportedConfigFormat; have: %+v", err)
 		}
 	})
 
+	t.Run("return error when file does not exist", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := Load(newMapFS(), "/missing/config.yaml")
+
+		require.Error(t, err)
+	})
+
+	t.Run("parse YAML from injected filesystem", func(t *testing.T) {
+		t.Parallel()
+
+		mfs := newMapFS()
+		mfs.writeFile("/home/.zit/config.yaml", []byte(`
+hosts:
+  github.example.com:
+    default:
+      name: "Jane Doe"
+      email: "jane@example.com"
+`))
+
+		conf, err := Load(mfs, "/home/.zit/config.yaml")
+		require.NoError(t, err)
+
+		host, err := conf.Get("github.example.com")
+		require.NoError(t, err)
+
+		assert.Equal(t, "Jane Doe", host.Default.Name)
+		assert.Equal(t, "jane@example.com", host.Default.Email)
+	})
+
 	t.Run("simple YAML config", func(t *testing.T) {
 		t.Parallel()
 
-		config, _ := Load("test_data/config_01.yaml")
+		config, _ := Load(app.OsFS{}, "test_data/config_01.yaml")
 
 		host, _ := config.Get("github.corp.com")
 

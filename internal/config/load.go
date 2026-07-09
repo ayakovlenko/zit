@@ -18,7 +18,7 @@ const (
 
 var ErrUnsupportedConfigFormat = fmt.Errorf("unsupported config format")
 
-func Load(filename string) (*ConfigRoot, error) {
+func Load(fs app.FS, filename string) (*ConfigRoot, error) {
 	format := formatFromFilename(filename)
 
 	if format != yamlFormat {
@@ -27,7 +27,7 @@ func Load(filename string) (*ConfigRoot, error) {
 
 	switch format {
 	case yamlFormat:
-		contents, err := os.ReadFile(filename)
+		contents, err := fs.ReadFile(filename)
 		if err != nil {
 			return nil, err
 		}
