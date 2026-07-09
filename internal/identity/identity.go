@@ -23,9 +23,7 @@ func findBestMatch(conf config.HostConfig, repo gitutil.RepoInfo) *config.User {
 			if override.Owner == repo.Owner && override.Repo == repo.Name {
 				return &override.User
 			}
-		}
-
-		if override.Owner == repo.Owner {
+		} else if override.Owner == repo.Owner {
 			return &override.User
 		}
 	}

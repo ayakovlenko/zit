@@ -376,10 +376,7 @@ tests:
         - key: "user.email"
           value: "contractor@corp.com"
 
-  # Bug: findBestMatch falls through the repo-specific check into the
-  # owner-only check, so corp/other gets the corp/secret identity.
-  # This test documents current behavior; fix tracked in PLAN.md.
-  - id: set_repo_override_other_repo_bug_applies_repo_user
+  - id: set_repo_override_other_repo_falls_back_to_owner_override
     argv: ["set"]
     setup:
       git_init: true
@@ -387,14 +384,14 @@ tests:
       config_file: *config_with_repo_override
     expect:
       stdout: |
-        set user: Contractor <contractor@corp.com>
+        set user: A. Lovelace <ada@corp.com>
       stderr: ""
       exit: 0
       git_config:
         - key: "user.name"
-          value: "Contractor"
+          value: "A. Lovelace"
         - key: "user.email"
-          value: "contractor@corp.com"
+          value: "ada@corp.com"
 
   - id: set_dry_run_no_signing
     argv: ["set", "--dry-run"]
