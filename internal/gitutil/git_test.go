@@ -26,7 +26,7 @@ func TestExtractHostNameFromRemote(t *testing.T) {
 		}
 		have, _ := ExtractRepoInfo(url)
 
-		assertEquals(t, have, want)
+		assertEquals(t, want, have)
 	})
 
 	t.Run("ssh string without .git suffix", func(t *testing.T) {
@@ -39,7 +39,7 @@ func TestExtractHostNameFromRemote(t *testing.T) {
 		}
 		have, _ := ExtractRepoInfo(url)
 
-		assertEquals(t, have, want)
+		assertEquals(t, want, have)
 	})
 
 	t.Run("https string", func(t *testing.T) {
@@ -52,7 +52,7 @@ func TestExtractHostNameFromRemote(t *testing.T) {
 		}
 		have, _ := ExtractRepoInfo(url)
 
-		assertEquals(t, have, want)
+		assertEquals(t, want, have)
 	})
 
 	t.Run("dots in the name", func(t *testing.T) {
@@ -66,7 +66,7 @@ func TestExtractHostNameFromRemote(t *testing.T) {
 			}
 			have, _ := ExtractRepoInfo(url)
 
-			assertEquals(t, have, want)
+			assertEquals(t, want, have)
 		})
 
 		t.Run("ssh string", func(t *testing.T) {
@@ -79,7 +79,7 @@ func TestExtractHostNameFromRemote(t *testing.T) {
 			}
 			have, _ := ExtractRepoInfo(url)
 
-			assertEquals(t, have, want)
+			assertEquals(t, want, have)
 		})
 	})
 
@@ -94,7 +94,7 @@ func TestExtractHostNameFromRemote(t *testing.T) {
 			}
 			have, _ := ExtractRepoInfo(url)
 
-			assertEquals(t, have, want)
+			assertEquals(t, want, have)
 		})
 
 		t.Run("ssh string", func(t *testing.T) {
@@ -107,7 +107,7 @@ func TestExtractHostNameFromRemote(t *testing.T) {
 			}
 			have, _ := ExtractRepoInfo(url)
 
-			assertEquals(t, have, want)
+			assertEquals(t, want, have)
 		})
 	})
 }

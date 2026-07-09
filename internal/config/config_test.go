@@ -204,9 +204,11 @@ hosts:
 	t.Run("simple YAML config", func(t *testing.T) {
 		t.Parallel()
 
-		config, _ := Load(app.OsFS{}, "test_data/config_01.yaml")
+		config, err := Load(app.OsFS{}, "test_data/config_01.yaml")
+		require.NoError(t, err)
 
-		host, _ := config.Get("github.corp.com")
+		host, err := config.Get("github.corp.com")
+		require.NoError(t, err)
 
 		name := host.Default.Name
 		email := host.Default.Email
