@@ -8,7 +8,6 @@ import (
 	"zit/internal/app"
 	"zit/pkg/xdg"
 
-	"github.com/spf13/afero"
 	"gopkg.in/yaml.v3"
 )
 
@@ -94,7 +93,7 @@ func LocateConfFile(appConfig app.Config) (string, error) {
 	}
 }
 
-func fileExists(fs afero.Fs, filename string) bool {
+func fileExists(fs app.FS, filename string) bool {
 	fileInfo, err := fs.Stat(filename)
 	if os.IsNotExist(err) {
 		return false

@@ -1,12 +1,32 @@
 package app
 
-import "github.com/spf13/afero"
+import (
+	"io/fs"
+	"os"
+)
+
+// FS is the filesystem interface used by the app.
+type FS interface {
+	Stat(name string) (fs.FileInfo, error)
+	Create(name string) (*os.File, error)
+}
+
+// OsFS is an FS backed by the real operating system.
+type OsFS struct{}
+
+func (OsFS) Stat(name string) (fs.FileInfo, error) {
+	return os.Stat(name)
+}
+
+func (OsFS) Create(name string) (*os.File, error) {
+	return os.Create(name)
+}
 
 type Config interface {
 	AppName() string
 	AppVersion() string
 	ConfigFilename() string
-	FS() afero.Fs
+	FS() FS
 	UserHomeDir() string
 	ConfigPathFromEnv() string
 	XDGHomePathFromEnv() string
@@ -19,7 +39,7 @@ const (
 )
 
 func NewConfig( //nolint: ireturn
-	fs afero.Fs,
+	fs FS,
 	userHomeDir string,
 	configPathFromEnv string,
 	xdgHomePathFromEnv string,
@@ -33,7 +53,7 @@ func NewConfig( //nolint: ireturn
 }
 
 type config struct {
-	fs                 afero.Fs
+	fs                 FS
 	userHomeDir        string
 	configPathFromEnv  string
 	xdgHomePathFromEnv string
@@ -51,7 +71,7 @@ func (c *config) ConfigFilename() string {
 	return configFilename
 }
 
-func (c *config) FS() afero.Fs { //nolint: ireturn
+func (c *config) FS() FS { //nolint: ireturn
 	return c.fs
 }
 
