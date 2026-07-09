@@ -1,0 +1,540 @@
+---
+# Binary-interface specification for zit.
+#
+# The test runner creates a fresh temporary directory for each test, so all
+# tests are fully isolated and idempotent. No test touches real HOME, real
+# git global/system config, or any shared filesystem state.
+#
+# Schema per test case:
+#
+#   id        string  -- unique identifier
+#   argv      list    -- arguments after the binary; the runner prepends the
+#                         binary under test (e.g. "zit", "zit-rs",
+#                         "cargo run --"). Empty list means no args.
+#   setup     map     -- environment to build before running the process:
+#     git_init        bool   -- create a git repo in a temp dir; sets CWD
+#     git_remote      string -- add this URL as "origin" (requires git_init)
+#     config_file     string -- write this YAML to CONFIG_PATH
+#     existing_file   map    -- write {path, content} before the run
+#     env             map    -- env vars to set; empty string unsets a var
+#   expect    map     -- assertions after the process exits:
+#     stdout          string -- exact match
+#     stderr          string -- exact match
+#     stderr_contains string -- substring match (use when path is dynamic)
+#     exit            int    -- exact exit code
+#     git_config      list   -- [{key, value}] entries that must exist in
+#                               .git/config after the run
+#     git_config_unchanged bool -- .git/config byte-identical before/after
+#     fs_exists       list   -- paths that must exist after the run
+#     fs_content      list   -- [{path, not_contains}] content assertions
+#
+# Variable substitution in string values (resolved per-test at run time):
+#   {{HOME}}        -- temp home dir for this test
+#   {{CWD}}         -- working directory for this test
+#   {{CONFIG_PATH}} -- resolved config file path (follows search order)
+#
+# Config file search order (first hit wins):
+#   1. $ZIT_CONFIG (if set; error if set but file absent)
+#   2. $XDG_CONFIG_HOME/zit/config.yaml (if XDG_CONFIG_HOME is set)
+#   3. $HOME/.config/zit/config.yaml
+#   4. $HOME/.zit/config.yaml
+#
+# Doctor command reads git global config from $GIT_CONFIG_GLOBAL and
+# system config from $GIT_CONFIG_SYSTEM. The runner must point these env
+# vars at temp files it controls so doctor tests are reproduceable.
+
+name: zit
+version: v3.1.2
+
+# Shared config fixtures (YAML anchors for reuse in test cases below)
+fixtures:
+  minimal_config: &minimal_config |
+    hosts:
+      github.com:
+        default:
+          name: "Ada Lovelace"
+          email: "ada@example.com"
+
+  config_with_signing: &config_with_signing |
+    hosts:
+      github.com:
+        default:
+          name: "Ada Lovelace"
+          email: "ada@example.com"
+          sign:
+            key: "~/.ssh/id_ed25519.pub"
+            format: "ssh"
+
+  config_with_override: &config_with_override |
+    hosts:
+      github.com:
+        default:
+          name: "Ada Lovelace"
+          email: "ada@example.com"
+        overrides:
+          - owner: "corp"
+            user:
+              name: "A. Lovelace"
+              email: "ada@corp.com"
+
+  config_with_repo_override: &config_with_repo_override |
+    hosts:
+      github.com:
+        default:
+          name: "Ada Lovelace"
+          email: "ada@example.com"
+        overrides:
+          - owner: "corp"
+            repo: "secret"
+            user:
+              name: "Contractor"
+              email: "contractor@corp.com"
+          - owner: "corp"
+            user:
+              name: "A. Lovelace"
+              email: "ada@corp.com"
+
+  config_no_default: &config_no_default |
+    hosts:
+      github.com:
+        overrides:
+          - owner: "corp"
+            user:
+              name: "A. Lovelace"
+              email: "ada@corp.com"
+
+  # Git config file content used by doctor tests.
+  # The runner writes these to temp files and sets GIT_CONFIG_GLOBAL /
+  # GIT_CONFIG_SYSTEM accordingly before each doctor test.
+  git_global_all_pass: &git_global_all_pass |
+    [user]
+        useConfigOnly = true
+
+  git_global_all_fail: &git_global_all_fail |
+    [user]
+        useConfigOnly = false
+        name = Ada Lovelace
+        email = ada@example.com
+
+  git_global_mixed: &git_global_mixed |
+    [user]
+        useConfigOnly = true
+        name = Ada Lovelace
+
+  git_system_empty: &git_system_empty ""
+
+  git_system_has_identity: &git_system_has_identity |
+    [user]
+        name = Ada Lovelace
+        email = ada@example.com
+
+  git_system_has_email_only: &git_system_has_email_only |
+    [user]
+        email = ada@example.com
+
+# Test cases
+tests:
+
+  # zit  (no args)
+  - id: help_no_args
+    argv: []
+    setup: {}
+    expect:
+      stdout: |
+        NAME:
+           zit - git identity manager
+
+        USAGE:
+           zit [global options] [command [command options]]
+
+        COMMANDS:
+           version  Print version
+           doctor   Check git setup for potential problems
+           set      Set git identity
+           config   Configuration management
+           help, h  Shows a list of commands or help for one command
+
+        GLOBAL OPTIONS:
+           --help, -h  show help
+      stderr: ""
+      exit: 0
+
+  # zit version
+  - id: version
+    argv: ["version"]
+    setup: {}
+    expect:
+      stdout: |
+        v3.1.2
+      stderr: ""
+      exit: 0
+
+  # zit doctor
+  # The runner sets GIT_CONFIG_GLOBAL -> temp file with git_global_* content
+  # and GIT_CONFIG_SYSTEM -> temp file with git_system_* content.
+  - id: doctor_all_pass
+    argv: ["doctor"]
+    setup:
+      git_global_config: *git_global_all_pass
+      git_system_config: *git_system_empty
+    expect:
+      stdout: |
+        - [x] git config --global user.useConfigOnly true
+        - [x] git config --unset-all --global user.name
+        - [x] git config --unset-all --global user.email
+        - [x] git config --unset-all --system user.name
+        - [x] git config --unset-all --system user.email
+      stderr: ""
+      exit: 0
+
+  - id: doctor_all_fail
+    argv: ["doctor"]
+    setup:
+      git_global_config: *git_global_all_fail
+      git_system_config: *git_system_has_identity
+    expect:
+      stdout: |
+        - [ ] git config --global user.useConfigOnly true
+        - [ ] git config --unset-all --global user.name
+        - [ ] git config --unset-all --global user.email
+        - [ ] git config --unset-all --system user.name
+        - [ ] git config --unset-all --system user.email
+      stderr: ""
+      exit: 0
+
+  - id: doctor_mixed
+    argv: ["doctor"]
+    setup:
+      git_global_config: *git_global_mixed
+      git_system_config: *git_system_has_email_only
+    expect:
+      stdout: |
+        - [x] git config --global user.useConfigOnly true
+        - [ ] git config --unset-all --global user.name
+        - [x] git config --unset-all --global user.email
+        - [x] git config --unset-all --system user.name
+        - [ ] git config --unset-all --system user.email
+      stderr: ""
+      exit: 0
+
+  # zit set -- error cases
+  - id: set_not_a_git_dir
+    argv: ["set"]
+    setup:
+      git_init: false
+    expect:
+      stdout: ""
+      stderr: |
+        Error: "{{CWD}}" is not a git directory
+
+        Make sure you are executing zit inside a git directory.
+
+        If you are, perhaps you have forgotten to initialize a new repository? In this
+        case, run:
+
+            git init
+
+        Or, if you have an existing repository but haven't set up the remote URL:
+
+            git remote add origin <url>
+      exit: 1
+
+  - id: set_config_not_found
+    argv: ["set"]
+    setup:
+      git_init: true
+    expect:
+      stdout: ""
+      stderr_contains: "config file is not found"
+      exit: 1
+
+  - id: set_no_origin_remote
+    argv: ["set"]
+    setup:
+      git_init: true
+      config_file: *minimal_config
+    expect:
+      stdout: |
+        Error: remote "origin" is not set
+
+        Add remote URL so that zit could use it for choosing the correct git identity as
+        defined in the configuration file:
+
+        git remote add origin <url>
+      stderr: ""
+      exit: 1
+      git_config_unchanged: true
+
+  - id: set_host_not_in_config
+    argv: ["set"]
+    setup:
+      git_init: true
+      git_remote: "git@gitlab.com:corp/myrepo.git"
+      config_file: *minimal_config
+    expect:
+      stdout: ""
+      stderr: |
+        cannot find config for host "gitlab.com"
+      exit: 1
+      git_config_unchanged: true
+
+  - id: set_no_matching_user
+    argv: ["set"]
+    setup:
+      git_init: true
+      git_remote: "git@github.com:nobody/myrepo.git"
+      config_file: *config_no_default
+    expect:
+      stdout: ""
+      stderr: |
+        cannot find a match for host "github.com"
+      exit: 1
+      git_config_unchanged: true
+
+  # zit set -- success cases
+  - id: set_default_user
+    argv: ["set"]
+    setup:
+      git_init: true
+      git_remote: "git@github.com:ada/myrepo.git"
+      config_file: *minimal_config
+    expect:
+      stdout: |
+        set user: Ada Lovelace <ada@example.com>
+      stderr: ""
+      exit: 0
+      git_config:
+        - key: "user.name"
+          value: "Ada Lovelace"
+        - key: "user.email"
+          value: "ada@example.com"
+
+  - id: set_with_signing
+    argv: ["set"]
+    setup:
+      git_init: true
+      git_remote: "git@github.com:ada/myrepo.git"
+      config_file: *config_with_signing
+    expect:
+      stdout: |
+        set user: Ada Lovelace <ada@example.com>
+        set signing key: ssh key at ~/.ssh/id_ed25519.pub
+      stderr: ""
+      exit: 0
+      git_config:
+        - key: "user.name"
+          value: "Ada Lovelace"
+        - key: "user.email"
+          value: "ada@example.com"
+        - key: "commit.gpgsign"
+          value: "true"
+        - key: "tag.gpgsign"
+          value: "true"
+        - key: "user.signingKey"
+          value: "~/.ssh/id_ed25519.pub"
+        - key: "gpg.format"
+          value: "ssh"
+
+  - id: set_owner_override_matches
+    argv: ["set"]
+    setup:
+      git_init: true
+      git_remote: "git@github.com:corp/myrepo.git"
+      config_file: *config_with_override
+    expect:
+      stdout: |
+        set user: A. Lovelace <ada@corp.com>
+      stderr: ""
+      exit: 0
+      git_config:
+        - key: "user.name"
+          value: "A. Lovelace"
+        - key: "user.email"
+          value: "ada@corp.com"
+
+  - id: set_owner_override_non_matching_falls_back_to_default
+    argv: ["set"]
+    setup:
+      git_init: true
+      git_remote: "git@github.com:personal/myrepo.git"
+      config_file: *config_with_override
+    expect:
+      stdout: |
+        set user: Ada Lovelace <ada@example.com>
+      stderr: ""
+      exit: 0
+      git_config:
+        - key: "user.name"
+          value: "Ada Lovelace"
+        - key: "user.email"
+          value: "ada@example.com"
+
+  - id: set_repo_override_matches
+    argv: ["set"]
+    setup:
+      git_init: true
+      git_remote: "git@github.com:corp/secret.git"
+      config_file: *config_with_repo_override
+    expect:
+      stdout: |
+        set user: Contractor <contractor@corp.com>
+      stderr: ""
+      exit: 0
+      git_config:
+        - key: "user.name"
+          value: "Contractor"
+        - key: "user.email"
+          value: "contractor@corp.com"
+
+  # Bug: findBestMatch falls through the repo-specific check into the
+  # owner-only check, so corp/other gets the corp/secret identity.
+  # This test documents current behavior; fix tracked in PLAN.md.
+  - id: set_repo_override_other_repo_bug_applies_repo_user
+    argv: ["set"]
+    setup:
+      git_init: true
+      git_remote: "git@github.com:corp/other.git"
+      config_file: *config_with_repo_override
+    expect:
+      stdout: |
+        set user: Contractor <contractor@corp.com>
+      stderr: ""
+      exit: 0
+      git_config:
+        - key: "user.name"
+          value: "Contractor"
+        - key: "user.email"
+          value: "contractor@corp.com"
+
+  - id: set_dry_run_no_signing
+    argv: ["set", "--dry-run"]
+    setup:
+      git_init: true
+      git_remote: "git@github.com:ada/myrepo.git"
+      config_file: *minimal_config
+    expect:
+      stdout: |
+        set user: Ada Lovelace <ada@example.com>
+      stderr: ""
+      exit: 0
+      git_config_unchanged: true
+
+  - id: set_dry_run_with_signing
+    argv: ["set", "--dry-run"]
+    setup:
+      git_init: true
+      git_remote: "git@github.com:ada/myrepo.git"
+      config_file: *config_with_signing
+    expect:
+      stdout: |
+        set user: Ada Lovelace <ada@example.com>
+        set signing key: ssh key at ~/.ssh/id_ed25519.pub
+      stderr: ""
+      exit: 0
+      git_config_unchanged: true
+
+  # zit config init
+  - id: config_init_creates_file
+    argv: ["config", "init"]
+    setup: {}
+    expect:
+      stdout: ""
+      stderr: ""
+      exit: 0
+      fs_exists:
+        - "{{HOME}}/.config/zit/config.yaml"
+
+  - id: config_init_overwrites_existing
+    argv: ["config", "init"]
+    setup:
+      existing_file:
+        path: "{{HOME}}/.config/zit/config.yaml"
+        content: |
+          old content
+    expect:
+      stdout: ""
+      stderr: ""
+      exit: 0
+      fs_content:
+        - path: "{{HOME}}/.config/zit/config.yaml"
+          not_contains: "old content"
+
+  - id: config_init_respects_xdg_config_home
+    argv: ["config", "init"]
+    setup:
+      env:
+        XDG_CONFIG_HOME: "{{HOME}}/xdg"
+    expect:
+      stdout: ""
+      stderr: ""
+      exit: 0
+      fs_exists:
+        - "{{HOME}}/xdg/zit/config.yaml"
+
+  # zit config path
+  - id: config_path_found
+    argv: ["config", "path"]
+    setup:
+      config_file: *minimal_config
+    expect:
+      stdout: |
+        {{CONFIG_PATH}}
+      stderr: ""
+      exit: 0
+
+  - id: config_path_not_found
+    argv: ["config", "path"]
+    setup: {}
+    expect:
+      stdout: ""
+      stderr: |
+        error: config not found; run:
+
+            zit config init
+      exit: 1
+
+  - id: config_path_env_override
+    argv: ["config", "path"]
+    setup:
+      config_file: *minimal_config
+      env:
+        ZIT_CONFIG: "{{CONFIG_PATH}}"
+    expect:
+      stdout: |
+        {{CONFIG_PATH}}
+      stderr: ""
+      exit: 0
+
+  - id: config_path_env_override_file_missing
+    argv: ["config", "path"]
+    setup:
+      env:
+        ZIT_CONFIG: "{{HOME}}/does-not-exist.yaml"
+    expect:
+      stdout: ""
+      stderr: |
+        error: config not found; run:
+
+            zit config init
+      exit: 1
+
+  # zit config show
+  - id: config_show_found
+    argv: ["config", "show"]
+    setup:
+      config_file: *minimal_config
+    expect:
+      stdout: *minimal_config
+      stderr: ""
+      exit: 0
+
+  - id: config_show_not_found
+    argv: ["config", "show"]
+    setup: {}
+    expect:
+      stdout: ""
+      stderr: |
+        error: config not found; run:
+
+            zit config init
+      exit: 1
