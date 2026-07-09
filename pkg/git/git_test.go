@@ -1,14 +1,17 @@
-package git
+package git_test
 
 import (
 	"testing"
+
+	"zit/pkg/git"
+	"zit/pkg/gitmock"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestIsGitDir(t *testing.T) {
 	t.Run("is git directory", func(t *testing.T) {
-		gitClient := NewMockGitClient()
+		gitClient := gitmock.NewMockGitClient()
 
 		gitClient.AddCommand(
 			[]string{"rev-parse", "--is-inside-work-tree"},
@@ -16,14 +19,14 @@ func TestIsGitDir(t *testing.T) {
 			nil,
 		)
 
-		ok, err := IsGitDir(gitClient)
+		ok, err := git.IsGitDir(gitClient)
 
 		assert.NoError(t, err)
 		assert.True(t, ok)
 	})
 
 	t.Run("output is false", func(t *testing.T) {
-		gitClient := NewMockGitClient()
+		gitClient := gitmock.NewMockGitClient()
 
 		gitClient.AddCommand(
 			[]string{"rev-parse", "--is-inside-work-tree"},
@@ -31,14 +34,14 @@ func TestIsGitDir(t *testing.T) {
 			nil,
 		)
 
-		ok, err := IsGitDir(gitClient)
+		ok, err := git.IsGitDir(gitClient)
 
 		assert.NoError(t, err)
 		assert.False(t, ok)
 	})
 
 	t.Run("exit code 128: not a git repository", func(t *testing.T) {
-		gitClient := NewMockGitClient()
+		gitClient := gitmock.NewMockGitClient()
 
 		gitClient.AddExitError(
 			[]string{"rev-parse", "--is-inside-work-tree"},
@@ -46,14 +49,14 @@ func TestIsGitDir(t *testing.T) {
 			128,
 		)
 
-		ok, err := IsGitDir(gitClient)
+		ok, err := git.IsGitDir(gitClient)
 
 		assert.NoError(t, err)
 		assert.False(t, ok)
 	})
 
 	t.Run("other exit codes: return error", func(t *testing.T) {
-		gitClient := NewMockGitClient()
+		gitClient := gitmock.NewMockGitClient()
 
 		gitClient.AddExitError(
 			[]string{"rev-parse", "--is-inside-work-tree"},
@@ -61,7 +64,7 @@ func TestIsGitDir(t *testing.T) {
 			1,
 		)
 
-		ok, err := IsGitDir(gitClient)
+		ok, err := git.IsGitDir(gitClient)
 
 		assert.Error(t, err)
 		assert.False(t, ok)

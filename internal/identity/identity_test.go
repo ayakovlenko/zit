@@ -4,7 +4,7 @@ import (
 	"testing"
 	"zit/internal/config"
 	"zit/internal/gitutil"
-	"zit/pkg/git"
+	"zit/pkg/gitmock"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -190,7 +190,7 @@ func TestSetIdentity(t *testing.T) {
 		// given
 		dryRun := false
 
-		gitClient := git.NewMockGitClient()
+		gitClient := gitmock.NewMockGitClient()
 
 		cred := config.User{
 			Name:  "John Doe",
@@ -218,7 +218,7 @@ func TestSetIdentity(t *testing.T) {
 		// given
 		dryRun := false
 
-		gitClient := git.NewMockGitClient()
+		gitClient := gitmock.NewMockGitClient()
 
 		cred := config.User{
 			Name:  "John Doe",
@@ -266,7 +266,7 @@ func TestSetIdentity(t *testing.T) {
 		// given
 		dryRun := true
 
-		gitClient := git.NewMockGitClient()
+		gitClient := gitmock.NewMockGitClient()
 
 		cred := config.User{
 			Name:  "John Doe",

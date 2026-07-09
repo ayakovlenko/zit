@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"zit/pkg/git"
+	"zit/pkg/gitmock"
 )
 
 func TestExtractHostNameFromRemote(t *testing.T) {
@@ -26,7 +26,7 @@ func TestExtractHostNameFromRemote(t *testing.T) {
 		}
 		have, _ := ExtractRepoInfo(url)
 
-		assertEquals(t, have, want)
+		assertEquals(t, want, have)
 	})
 
 	t.Run("ssh string without .git suffix", func(t *testing.T) {
@@ -39,7 +39,7 @@ func TestExtractHostNameFromRemote(t *testing.T) {
 		}
 		have, _ := ExtractRepoInfo(url)
 
-		assertEquals(t, have, want)
+		assertEquals(t, want, have)
 	})
 
 	t.Run("https string", func(t *testing.T) {
@@ -52,7 +52,7 @@ func TestExtractHostNameFromRemote(t *testing.T) {
 		}
 		have, _ := ExtractRepoInfo(url)
 
-		assertEquals(t, have, want)
+		assertEquals(t, want, have)
 	})
 
 	t.Run("dots in the name", func(t *testing.T) {
@@ -66,7 +66,7 @@ func TestExtractHostNameFromRemote(t *testing.T) {
 			}
 			have, _ := ExtractRepoInfo(url)
 
-			assertEquals(t, have, want)
+			assertEquals(t, want, have)
 		})
 
 		t.Run("ssh string", func(t *testing.T) {
@@ -79,7 +79,7 @@ func TestExtractHostNameFromRemote(t *testing.T) {
 			}
 			have, _ := ExtractRepoInfo(url)
 
-			assertEquals(t, have, want)
+			assertEquals(t, want, have)
 		})
 	})
 
@@ -94,7 +94,7 @@ func TestExtractHostNameFromRemote(t *testing.T) {
 			}
 			have, _ := ExtractRepoInfo(url)
 
-			assertEquals(t, have, want)
+			assertEquals(t, want, have)
 		})
 
 		t.Run("ssh string", func(t *testing.T) {
@@ -107,14 +107,14 @@ func TestExtractHostNameFromRemote(t *testing.T) {
 			}
 			have, _ := ExtractRepoInfo(url)
 
-			assertEquals(t, have, want)
+			assertEquals(t, want, have)
 		})
 	})
 }
 
 func TestRemoteURL(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		gitClient := git.NewMockGitClient()
+		gitClient := gitmock.NewMockGitClient()
 		gitClient.AddCommand(
 			[]string{"remote", "get-url", "origin"},
 			"git@github.com:user/repo.git",
@@ -132,7 +132,7 @@ func TestRemoteURL(t *testing.T) {
 	})
 
 	t.Run("exit code 2: remote not set", func(t *testing.T) {
-		gitClient := git.NewMockGitClient()
+		gitClient := gitmock.NewMockGitClient()
 		gitClient.AddExitError(
 			[]string{"remote", "get-url", "origin"},
 			"error: No such remote 'origin'",
@@ -150,7 +150,7 @@ func TestRemoteURL(t *testing.T) {
 	})
 
 	t.Run("exit code 128: return underlying error", func(t *testing.T) {
-		gitClient := git.NewMockGitClient()
+		gitClient := gitmock.NewMockGitClient()
 		gitClient.AddExitError(
 			[]string{"remote", "get-url", "origin"},
 			"fatal: not a git repository",
