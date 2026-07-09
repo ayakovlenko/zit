@@ -1,11 +1,12 @@
-package git
+package gitmock
 
 import (
 	"fmt"
 	"strings"
+	"zit/pkg/git"
 )
 
-type mockGitClient struct {
+type MockClient struct {
 	commands map[string]mockResult
 }
 
@@ -14,13 +15,13 @@ type mockResult struct {
 	err    error
 }
 
-func NewMockGitClient() *mockGitClient {
-	return &mockGitClient{
+func NewMockGitClient() *MockClient {
+	return &MockClient{
 		commands: make(map[string]mockResult),
 	}
 }
 
-func (m *mockGitClient) Exec(args ...string) (string, error) {
+func (m *MockClient) Exec(args ...string) (string, error) {
 	cmd := strings.Join(args, " ")
 
 	if res, ok := m.commands[cmd]; ok {
@@ -30,7 +31,7 @@ func (m *mockGitClient) Exec(args ...string) (string, error) {
 	return "", fmt.Errorf("command %q not found in mock", cmd)
 }
 
-func (m *mockGitClient) AddCommand(args []string, output string, err error) {
+func (m *MockClient) AddCommand(args []string, output string, err error) {
 	argsKey := strings.Join(args, " ")
 	m.commands[argsKey] = mockResult{
 		output: output,
@@ -38,13 +39,16 @@ func (m *mockGitClient) AddCommand(args []string, output string, err error) {
 	}
 }
 
-func (m *mockGitClient) AddExitError(args []string, output string, exitCode int) {
+func (m *MockClient) AddExitError(args []string, output string, exitCode int) {
 	argsKey := strings.Join(args, " ")
 	m.commands[argsKey] = mockResult{
 		output: output,
 		err:    &mockExitError{exitCode: exitCode, stderr: output},
 	}
 }
+
+// Verify MockClient implements git.GitClient at compile time.
+var _ git.GitClient = (*MockClient)(nil)
 
 type mockExitError struct {
 	exitCode int
