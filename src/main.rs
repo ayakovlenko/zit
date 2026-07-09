@@ -215,6 +215,7 @@ fn find_best_match<'a>(host_conf: &'a HostConfig, repo: &RepoInfo) -> Option<&'a
             if ov.owner == repo.owner && ov.repo == repo.name {
                 return Some(&ov.user);
             }
+            continue;
         }
         if ov.owner == repo.owner {
             return Some(&ov.user);
