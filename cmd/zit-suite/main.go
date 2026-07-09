@@ -63,25 +63,25 @@ type FsAssertion struct {
 	NotContains string `yaml:"not_contains"`
 }
 
+// Fixed paths inside every test container.
+const (
+	containerHome      = "/home/zit"
+	containerRepoDir   = "/home/zit/repo"
+	containerGitGlobal = "/home/zit/git-global-config"
+	containerGitSystem = "/home/zit/git-system-config"
+)
+
 func main() {
 	specPath := flag.String("spec", "spec.yaml", "path to spec.yaml")
 	runFilter := flag.String("run", "", "regex filter on test ID")
 	verbose := flag.Bool("v", false, "print output of passing tests")
 	flag.Parse()
 
-	if flag.NArg() == 0 {
-		fmt.Fprintln(os.Stderr, "usage: zit-suite [--spec <path>] [--run <regex>] [-v] <binary> [binary-args...]")
+	if flag.NArg() != 1 {
+		fmt.Fprintln(os.Stderr, "usage: zit-suite [--spec <path>] [--run <regex>] [-v] <image>")
 		os.Exit(2)
 	}
-	binaryTokens := flag.Args()
-
-	// Resolve the binary to an absolute path so it can be found when
-	// cmd.Dir is set to the test's temp directory.
-	if resolved, err := exec.LookPath(binaryTokens[0]); err == nil {
-		if abs, err := filepath.Abs(resolved); err == nil {
-			binaryTokens[0] = abs
-		}
-	}
+	image := flag.Arg(0)
 
 	var filter *regexp.Regexp
 	if *runFilter != "" {
@@ -110,7 +110,7 @@ func main() {
 		if filter != nil && !filter.MatchString(tc.ID) {
 			continue
 		}
-		failures := runTest(tc, binaryTokens)
+		failures := runTest(tc, image)
 		if len(failures) == 0 {
 			passed++
 			if *verbose {
@@ -136,16 +136,15 @@ func main() {
 	}
 }
 
-func runTest(tc TestCase, binaryTokens []string) []string {
-	tmpHome, err := os.MkdirTemp("", "zit-suite-*")
-	if err != nil {
-		return []string{fmt.Sprintf("setup: MkdirTemp: %v", err)}
-	}
-	defer os.RemoveAll(tmpHome)
+func runTest(tc TestCase, image string) []string {
+	cid := "zit-suite-" + tc.ID
 
-	// Resolve symlinks so {{HOME}} matches what the OS reports to the binary.
-	if real, err := filepath.EvalSymlinks(tmpHome); err == nil {
-		tmpHome = real
+	configPath := resolveConfigPath(containerHome, tc.Setup.Env)
+
+	// CWD inside the container: repo subdir when git_init, home otherwise.
+	cwd := containerHome
+	if tc.Setup.GitInit {
+		cwd = containerRepoDir
 	}
 
 	var failures []string
@@ -153,89 +152,87 @@ func runTest(tc TestCase, binaryTokens []string) []string {
 		failures = append(failures, fmt.Sprintf(format, args...))
 	}
 
-	// CWD defaults to tmpHome; overridden when git_init is true.
-	cwd := tmpHome
+	// Build env for docker create.
+	env := buildContainerEnv(configPath, tc.Setup.Env)
 
-	if tc.Setup.GitInit {
-		repoDir := filepath.Join(tmpHome, "repo")
-		if err := os.MkdirAll(repoDir, 0755); err != nil {
-			return []string{fmt.Sprintf("setup: mkdir repo: %v", err)}
-		}
-		if _, err := gitSetup(repoDir, "init", "--initial-branch=main"); err != nil {
-			// older git versions don't support --initial-branch; retry without
-			if _, err2 := gitSetup(repoDir, "init"); err2 != nil {
-				return []string{fmt.Sprintf("setup: git init: %v", err2)}
-			}
-		}
-		_, _ = gitSetup(repoDir, "config", "user.email", "test@example.com")
-		_, _ = gitSetup(repoDir, "config", "user.name", "Test")
-		if tc.Setup.GitRemote != "" {
-			if _, err := gitSetup(repoDir, "remote", "add", "origin", tc.Setup.GitRemote); err != nil {
-				return []string{fmt.Sprintf("setup: git remote add: %v", err)}
-			}
-		}
-		cwd = repoDir
+	// Create the container.
+	createArgs := []string{"create", "--name", cid}
+	for _, kv := range env {
+		createArgs = append(createArgs, "-e", kv)
+	}
+	createArgs = append(createArgs, image, "sleep", "infinity")
+	if out, err := dockerCmd(createArgs...); err != nil {
+		return []string{fmt.Sprintf("setup: docker create: %v\n%s", err, out)}
+	}
+	defer dockerCmd("rm", "-f", cid) //nolint:errcheck
+
+	// Start it.
+	if out, err := dockerCmd("start", cid); err != nil {
+		return []string{fmt.Sprintf("setup: docker start: %v\n%s", err, out)}
 	}
 
-	globalCfgPath := filepath.Join(tmpHome, "git-global-config")
-	systemCfgPath := filepath.Join(tmpHome, "git-system-config")
-	if err := os.WriteFile(globalCfgPath, []byte(tc.Setup.GitGlobalConfig), 0644); err != nil {
+	// Write git global and system config files.
+	if err := containerWriteFile(cid, containerGitGlobal, tc.Setup.GitGlobalConfig); err != nil {
 		return []string{fmt.Sprintf("setup: write git global config: %v", err)}
 	}
-	if err := os.WriteFile(systemCfgPath, []byte(tc.Setup.GitSystemConfig), 0644); err != nil {
+	if err := containerWriteFile(cid, containerGitSystem, tc.Setup.GitSystemConfig); err != nil {
 		return []string{fmt.Sprintf("setup: write git system config: %v", err)}
 	}
 
-	configPath := resolveConfigPath(tmpHome, tc.Setup.Env)
-
-	if tc.Setup.ConfigFile != "" {
-		if err := os.MkdirAll(filepath.Dir(configPath), 0755); err != nil {
-			return []string{fmt.Sprintf("setup: mkdir config dir: %v", err)}
+	// Git init.
+	if tc.Setup.GitInit {
+		if out, err := containerExec(cid, "git", "init", "--initial-branch=main", containerRepoDir); err != nil {
+			// Older git versions don't support --initial-branch; retry without.
+			if out2, err2 := containerExec(cid, "git", "init", containerRepoDir); err2 != nil {
+				return []string{fmt.Sprintf("setup: git init: %v\n%s", err2, out2)}
+			}
+			_ = out
 		}
-		if err := os.WriteFile(configPath, []byte(tc.Setup.ConfigFile), 0644); err != nil {
+		_, _ = containerExec(cid, "git", "-C", containerRepoDir, "config", "user.email", "test@example.com")
+		_, _ = containerExec(cid, "git", "-C", containerRepoDir, "config", "user.name", "Test")
+		if tc.Setup.GitRemote != "" {
+			if out, err := containerExec(cid, "git", "-C", containerRepoDir, "remote", "add", "origin", tc.Setup.GitRemote); err != nil {
+				return []string{fmt.Sprintf("setup: git remote add: %v\n%s", err, out)}
+			}
+		}
+	}
+
+	// Write zit config file.
+	if tc.Setup.ConfigFile != "" {
+		if err := containerWriteFile(cid, configPath, tc.Setup.ConfigFile); err != nil {
 			return []string{fmt.Sprintf("setup: write config file: %v", err)}
 		}
 	}
 
+	// Write existing_file.
 	if tc.Setup.ExistingFile != nil {
-		p := substituteVars(tc.Setup.ExistingFile.Path, tmpHome, cwd, configPath)
-		if err := os.MkdirAll(filepath.Dir(p), 0755); err != nil {
-			return []string{fmt.Sprintf("setup: mkdir existing_file dir: %v", err)}
-		}
-		if err := os.WriteFile(p, []byte(tc.Setup.ExistingFile.Content), 0644); err != nil {
+		p := substituteVars(tc.Setup.ExistingFile.Path, containerHome, cwd, configPath)
+		if err := containerWriteFile(cid, p, tc.Setup.ExistingFile.Content); err != nil {
 			return []string{fmt.Sprintf("setup: write existing_file: %v", err)}
 		}
 	}
 
-	var gitConfigSnapshot []byte
+	// Snapshot .git/config before running zit, for git_config_unchanged check.
+	var gitConfigSnapshot string
 	if tc.Expect.GitConfigUnchanged && tc.Setup.GitInit {
-		gitConfigSnapshot, _ = os.ReadFile(filepath.Join(cwd, ".git", "config"))
+		gitConfigSnapshot, _, _ = dockerExec(cid, "cat", containerRepoDir+"/.git/config")
 	}
 
-	env := buildEnv(tmpHome, globalCfgPath, systemCfgPath, configPath, tc.Setup.Env)
+	// Run zit. cd into cwd first; redirect stdout/stderr to temp files so we
+	// can capture them separately, then read them back.
+	zitCmd := shellQuote(append([]string{"zit"}, tc.Argv...)...)
+	script := fmt.Sprintf("cd %s && %s > /tmp/zit-stdout 2> /tmp/zit-stderr; echo $? > /tmp/zit-exit", shellEscape(cwd), zitCmd)
+	containerExec(cid, "sh", "-c", script) //nolint:errcheck -- exit code comes from the file
 
-	args := append(append([]string{}, binaryTokens[1:]...), tc.Argv...)
-	cmd := exec.Command(binaryTokens[0], args...)
-	cmd.Dir = cwd
-	cmd.Env = env
-
-	var stdoutBuf, stderrBuf bytes.Buffer
-	cmd.Stdout = &stdoutBuf
-	cmd.Stderr = &stderrBuf
-
-	_ = cmd.Run()
-
+	gotStdout, _, _ := dockerExec(cid, "cat", "/tmp/zit-stdout")
+	gotStderr, _, _ := dockerExec(cid, "cat", "/tmp/zit-stderr")
+	exitStr, _, _ := dockerExec(cid, "cat", "/tmp/zit-exit")
 	exitCode := 0
-	if cmd.ProcessState != nil {
-		exitCode = cmd.ProcessState.ExitCode()
-	}
+	fmt.Sscanf(strings.TrimSpace(exitStr), "%d", &exitCode)
 
-	wantStdout := substituteVars(tc.Expect.Stdout, tmpHome, cwd, configPath)
-	wantStderr := substituteVars(tc.Expect.Stderr, tmpHome, cwd, configPath)
-	wantStderrContains := substituteVars(tc.Expect.StderrContains, tmpHome, cwd, configPath)
-
-	gotStdout := stdoutBuf.String()
-	gotStderr := stderrBuf.String()
+	wantStdout := substituteVars(tc.Expect.Stdout, containerHome, cwd, configPath)
+	wantStderr := substituteVars(tc.Expect.Stderr, containerHome, cwd, configPath)
+	wantStderrContains := substituteVars(tc.Expect.StderrContains, containerHome, cwd, configPath)
 
 	if exitCode != tc.Expect.Exit {
 		fail("exit code mismatch:\n  want: %d\n  got:  %d\n  stderr: %q", tc.Expect.Exit, exitCode, gotStderr)
@@ -260,10 +257,12 @@ func runTest(tc TestCase, binaryTokens []string) []string {
 		fail("stderr mismatch:\n  want: (empty)\n  got:  %q", gotStderr)
 	}
 
+	// git_config assertions.
 	for _, kv := range tc.Expect.GitConfig {
-		out, err := gitLocal(cwd, "config", "--local", kv.Key)
-		if err != nil {
-			fail("git config --local %s: %v", kv.Key, err)
+		out, _, code := dockerExec(cid, "git", "-C", containerRepoDir, "config", "--local", kv.Key)
+		out = strings.TrimSpace(out)
+		if code != 0 {
+			fail("git config --local %s: exit %d", kv.Key, code)
 			continue
 		}
 		if out != kv.Value {
@@ -271,28 +270,32 @@ func runTest(tc TestCase, binaryTokens []string) []string {
 		}
 	}
 
+	// git_config_unchanged assertion.
 	if tc.Expect.GitConfigUnchanged && tc.Setup.GitInit {
-		after, _ := os.ReadFile(filepath.Join(cwd, ".git", "config"))
-		if !bytes.Equal(gitConfigSnapshot, after) {
+		after, _, _ := dockerExec(cid, "cat", containerRepoDir+"/.git/config")
+		if gitConfigSnapshot != after {
 			fail("git config changed when it should not have")
 		}
 	}
 
+	// fs_exists assertions.
 	for _, p := range tc.Expect.FsExists {
-		p = substituteVars(p, tmpHome, cwd, configPath)
-		if _, err := os.Stat(p); os.IsNotExist(err) {
+		p = substituteVars(p, containerHome, cwd, configPath)
+		_, _, code := dockerExec(cid, "test", "-e", p)
+		if code != 0 {
 			fail("fs_exists: %s does not exist", p)
 		}
 	}
 
+	// fs_content assertions.
 	for _, a := range tc.Expect.FsContent {
-		p := substituteVars(a.Path, tmpHome, cwd, configPath)
-		content, err := os.ReadFile(p)
-		if err != nil {
-			fail("fs_content: cannot read %s: %v", p, err)
+		p := substituteVars(a.Path, containerHome, cwd, configPath)
+		content, _, code := dockerExec(cid, "cat", p)
+		if code != 0 {
+			fail("fs_content: cannot read %s", p)
 			continue
 		}
-		if a.NotContains != "" && strings.Contains(string(content), a.NotContains) {
+		if a.NotContains != "" && strings.Contains(content, a.NotContains) {
 			fail("fs_content: %s contains %q but should not", p, a.NotContains)
 		}
 	}
@@ -300,43 +303,88 @@ func runTest(tc TestCase, binaryTokens []string) []string {
 	return failures
 }
 
-// gitSetup runs a git command during test setup with a clean env so ambient
-// GIT_CONFIG_GLOBAL / GIT_CONFIG_SYSTEM don't interfere.
-func gitSetup(dir string, args ...string) (string, error) {
-	cmd := exec.Command("git", args...)
-	cmd.Dir = dir
-	cmd.Env = append(os.Environ(),
-		"GIT_CONFIG_GLOBAL=/dev/null",
-		"GIT_CONFIG_SYSTEM=/dev/null",
-		"GIT_CONFIG_NOSYSTEM=1",
-	)
+// dockerCmd runs a top-level docker command (not exec) and returns combined output.
+func dockerCmd(args ...string) (string, error) {
+	cmd := exec.Command("docker", args...)
 	out, err := cmd.CombinedOutput()
 	return strings.TrimSpace(string(out)), err
 }
 
-// gitLocal reads a git config value from a repo directory after the test has
-// run, using the ambient env (which has the real git config).
-func gitLocal(dir string, args ...string) (string, error) {
-	cmd := exec.Command("git", args...)
-	cmd.Dir = dir
-	cmd.Env = append(os.Environ(),
-		"GIT_CONFIG_GLOBAL=/dev/null",
-		"GIT_CONFIG_SYSTEM=/dev/null",
-		"GIT_CONFIG_NOSYSTEM=1",
-	)
+// containerExec runs a command inside cid and returns combined output + error.
+func containerExec(cid string, args ...string) (string, error) {
+	out, _, err2 := dockerExec(cid, args...)
+	var err error
+	if err2 != 0 {
+		err = fmt.Errorf("exit %d", err2)
+	}
+	return out, err
+}
+
+// dockerExec runs docker exec <cid> <args...> and returns stdout, stderr, exit code.
+func dockerExec(cid string, args ...string) (stdout, stderr string, exitCode int) {
+	dockerArgs := append([]string{"exec", cid}, args...)
+	cmd := exec.Command("docker", dockerArgs...)
+	var outBuf, errBuf bytes.Buffer
+	cmd.Stdout = &outBuf
+	cmd.Stderr = &errBuf
+	_ = cmd.Run()
+	if cmd.ProcessState != nil {
+		exitCode = cmd.ProcessState.ExitCode()
+	}
+	return outBuf.String(), errBuf.String(), exitCode
+}
+
+// containerWriteFile writes content to path inside the container using sh -c with stdin.
+func containerWriteFile(cid, path, content string) error {
+	dir := filepath.Dir(path)
+	script := fmt.Sprintf("mkdir -p %s && cat > %s", shellEscape(dir), shellEscape(path))
+	cmd := exec.Command("docker", "exec", "-i", cid, "sh", "-c", script)
+	cmd.Stdin = strings.NewReader(content)
 	out, err := cmd.CombinedOutput()
-	return strings.TrimSpace(string(out)), err
+	if err != nil {
+		return fmt.Errorf("%v: %s", err, out)
+	}
+	return nil
+}
+
+// shellEscape wraps a string in single quotes, escaping any single quotes within.
+func shellEscape(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", "'\\''") + "'"
+}
+
+// shellQuote joins args into a shell command string with each arg single-quoted.
+func shellQuote(args ...string) string {
+	parts := make([]string, len(args))
+	for i, a := range args {
+		parts[i] = shellEscape(a)
+	}
+	return strings.Join(parts, " ")
+}
+
+// buildContainerEnv builds the env slice for docker create.
+func buildContainerEnv(configPath string, setupEnv map[string]string) []string {
+	env := []string{
+		"HOME=" + containerHome,
+		"GIT_CONFIG_GLOBAL=" + containerGitGlobal,
+		"GIT_CONFIG_SYSTEM=" + containerGitSystem,
+		"GIT_CONFIG_NOSYSTEM=1",
+	}
+	for k, v := range setupEnv {
+		if v == "" {
+			continue
+		}
+		v = strings.ReplaceAll(v, "{{HOME}}", containerHome)
+		v = strings.ReplaceAll(v, "{{CONFIG_PATH}}", configPath)
+		env = append(env, k+"="+v)
+	}
+	return env
 }
 
 // resolveConfigPath returns the path the config file should be written to and
 // read from, following the spec search order. Does not require the file to exist.
 func resolveConfigPath(home string, setupEnv map[string]string) string {
-	// Substitute {{HOME}} in env values before using them.
 	sub := func(s string) string { return strings.ReplaceAll(s, "{{HOME}}", home) }
 
-	// ZIT_CONFIG takes priority, but it may contain {{CONFIG_PATH}} which
-	// means "same as the default path" -- resolve the default first and
-	// substitute back.
 	defaultPath := filepath.Join(home, ".config", "zit", "config.yaml")
 	if v := setupEnv["XDG_CONFIG_HOME"]; v != "" {
 		defaultPath = filepath.Join(sub(v), "zit", "config.yaml")
@@ -348,26 +396,6 @@ func resolveConfigPath(home string, setupEnv map[string]string) string {
 		return v
 	}
 	return defaultPath
-}
-
-func buildEnv(home, globalCfg, systemCfg, configPath string, setupEnv map[string]string) []string {
-	env := []string{
-		"HOME=" + home,
-		"PATH=" + os.Getenv("PATH"),
-		"GIT_CONFIG_GLOBAL=" + globalCfg,
-		"GIT_CONFIG_SYSTEM=" + systemCfg,
-		"GIT_CONFIG_NOSYSTEM=1",
-	}
-	for k, v := range setupEnv {
-		if v == "" {
-			continue
-		}
-		// Substitute {{HOME}} and {{CONFIG_PATH}} in env values.
-		v = strings.ReplaceAll(v, "{{HOME}}", home)
-		v = strings.ReplaceAll(v, "{{CONFIG_PATH}}", configPath)
-		env = append(env, k+"="+v)
-	}
-	return env
 }
 
 func substituteVars(s, home, cwd, configPath string) string {
