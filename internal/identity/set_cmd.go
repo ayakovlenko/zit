@@ -38,7 +38,7 @@ func SetCmd(appConfig app.Config) *cli.Command {
 				return err
 			}
 
-			conf, err := config.Load(confPath)
+			conf, err := config.Load(appConfig.FS(), confPath)
 			if err != nil {
 				return err
 			}
